@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Sound wave left 2 (outer) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.45"
+        android:pathData="M37,34 C25,37 25,65 37,68 C32,65 32,37 37,34 Z" />
+
+    <!-- Sound wave left 1 (inner) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.75"
+        android:pathData="M41,38 C32,40 32,62 41,64 C37,62 37,40 41,38 Z" />
+
+    <!-- Sound wave right 1 (inner) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.75"
+        android:pathData="M67,38 C76,40 76,62 67,64 C71,62 71,40 67,38 Z" />
+
+    <!-- Sound wave right 2 (outer) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.45"
+        android:pathData="M71,34 C83,37 83,65 71,68 C76,65 76,37 71,34 Z" />
+
+    <!-- Microphone body (capsule) -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,24 Q64,24 64,34 L64,58 Q64,68 54,68 Q44,68 44,58 L44,34 Q44,24 54,24 Z" />
+
+    <!-- Mic grille lines (clipped to body shape) -->
+    <group>
+        <clip-path android:pathData="M54,24 Q64,24 64,34 L64,58 Q64,68 54,68 Q44,68 44,58 L44,34 Q44,24 54,24 Z" />
+        <path
+            android:fillColor="#3B0764"
+            android:fillAlpha="0.35"
+            android:pathData="M44,33.5 H64 V36 H44 Z
+                              M44,40.5 H64 V43 H44 Z
+                              M44,47.5 H64 V50 H44 Z
+                              M44,54.5 H64 V57 H44 Z" />
+    </group>
+
+    <!-- Mic stand -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M51,68 L57,68 L57,82 L51,82 Z" />
+
+    <!-- Mic base -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M40,82 L68,82 L68,86 L40,86 Z" />
+
+    <!-- Music note: head (eighth note upper-right) -->
+    <path
+        android:fillColor="#FCD34D"
+        android:pathData="M79,36 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 Z" />
+
+    <!-- Music note: stem -->
+    <path
+        android:fillColor="#FCD34D"
+        android:pathData="M82,36 L82,21 L84,21 L84,36 Z" />
+
+    <!-- Music note: flag -->
+    <path
+        android:fillColor="#FCD34D"
+        android:pathData="M82,21 Q90,24 88,32 L86,31 Q88,25 83,23 Z" />
+
+    <!-- Sparkle / concert lights -->
+    <!-- Large dot -->
+    <path
+        android:fillColor="#FDE68A"
+        android:pathData="M26,26 m-4,0 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 Z" />
+    <!-- Medium dot -->
+    <path
+        android:fillColor="#FDE68A"
+        android:fillAlpha="0.8"
+        android:pathData="M34,18 m-2.5,0 a2.5,2.5 0 1,0 5,0 a2.5,2.5 0 1,0 -5,0 Z" />
+    <!-- Small dot -->
+    <path
+        android:fillColor="#FDE68A"
+        android:fillAlpha="0.6"
+        android:pathData="M19,37 m-2,0 a2,2 0 1,0 4,0 a2,2 0 1,0 -4,0 Z" />
+
+    <!-- Star cross-sparkle on large dot -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.9"
+        android:pathData="M25,22 L26,25 L29,26 L26,27 L25,30 L24,27 L21,26 L24,25 Z" />
+
+</vector>
