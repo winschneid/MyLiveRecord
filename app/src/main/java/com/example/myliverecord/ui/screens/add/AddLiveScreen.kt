@@ -14,9 +14,13 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,9 +34,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.myliverecord.ui.theme.MyLiveRecordTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -87,7 +93,7 @@ private fun AddLiveContent(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("ライブを記録") },
+                title = { Text(if (uiState.isEditMode) "ライブを編集" else "ライブを記録") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -109,20 +115,18 @@ private fun AddLiveContent(
         ) {
             Spacer(Modifier.height(4.dp))
 
-            OutlinedTextField(
+            SuggestTextField(
                 value = uiState.artistName,
                 onValueChange = { onAction(AddLiveAction.UpdateArtistName(it)) },
-                label = { Text("アーティスト名 *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                label = "アーティスト名 *",
+                suggestions = uiState.artistSuggestions,
             )
 
-            OutlinedTextField(
+            SuggestTextField(
                 value = uiState.venueName,
                 onValueChange = { onAction(AddLiveAction.UpdateVenueName(it)) },
-                label = { Text("会場名 *") },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
+                label = "会場名 *",
+                suggestions = uiState.venueSuggestions,
             )
 
             OutlinedTextField(
@@ -159,5 +163,122 @@ private fun AddLiveContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SuggestTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    suggestions: List<String>,
+    modifier: Modifier = Modifier,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded && suggestions.isNotEmpty(),
+        onExpandedChange = { expanded = it },
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {
+                onValueChange(it)
+                expanded = true
+            },
+            label = { Text(label) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(type = MenuAnchorType.PrimaryEditable, enabled = true),
+            singleLine = true,
+            trailingIcon = {
+                if (suggestions.isNotEmpty()) {
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
+            },
+        )
+        ExposedDropdownMenu(
+            expanded = expanded && suggestions.isNotEmpty(),
+            onDismissRequest = { expanded = false },
+        ) {
+            suggestions.forEach { suggestion ->
+                DropdownMenuItem(
+                    text = { Text(suggestion) },
+                    onClick = {
+                        onValueChange(suggestion)
+                        expanded = false
+                    },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                )
+            }
+        }
+    }
+}
+
 private fun formatDate(timestamp: Long): String =
     SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN).format(Date(timestamp))
+
+// region Previews
+
+@Preview(name = "登録 - 空", showBackground = true)
+@Composable
+private fun AddLiveEmptyPreview() {
+    MyLiveRecordTheme {
+        AddLiveContent(
+            uiState = AddLiveUiState(),
+            onAction = {},
+            onNavigateBack = {},
+        )
+    }
+}
+
+@Preview(name = "登録 - 入力済み", showBackground = true)
+@Composable
+private fun AddLiveFilledPreview() {
+    MyLiveRecordTheme {
+        AddLiveContent(
+            uiState = AddLiveUiState(
+                artistName = "YOASOBI",
+                venueName = "さいたまスーパーアリーナ",
+                seatNumber = "アリーナA-12",
+                date = 1704067200000L,
+            ),
+            onAction = {},
+            onNavigateBack = {},
+        )
+    }
+}
+
+@Preview(name = "編集モード", showBackground = true)
+@Composable
+private fun AddLiveEditPreview() {
+    MyLiveRecordTheme {
+        AddLiveContent(
+            uiState = AddLiveUiState(
+                artistName = "YOASOBI",
+                venueName = "さいたまスーパーアリーナ",
+                seatNumber = "アリーナA-12",
+                date = 1704067200000L,
+                isEditMode = true,
+            ),
+            onAction = {},
+            onNavigateBack = {},
+        )
+    }
+}
+
+@Preview(name = "登録 - サジェスト表示", showBackground = true)
+@Composable
+private fun AddLiveWithSuggestionsPreview() {
+    MyLiveRecordTheme {
+        AddLiveContent(
+            uiState = AddLiveUiState(
+                artistName = "YO",
+                artistSuggestions = listOf("YOASOBI", "Yonezu Kenshi"),
+            ),
+            onAction = {},
+            onNavigateBack = {},
+        )
+    }
+}
+
+// endregion

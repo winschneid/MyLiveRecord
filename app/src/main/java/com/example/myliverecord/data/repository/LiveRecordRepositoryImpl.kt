@@ -15,9 +15,20 @@ class LiveRecordRepositoryImpl @Inject constructor(
     override fun observeAllRecords(): Flow<List<LiveRecord>> =
         dao.getAllRecords().map { entities -> entities.map { it.toDomain() } }
 
+    override suspend fun getRecordById(id: Long): LiveRecord? =
+        dao.getRecordById(id)?.toDomain()
+
     override suspend fun addRecord(record: LiveRecord) {
         dao.insert(record.toEntity())
     }
+
+    override suspend fun updateRecord(record: LiveRecord) {
+        dao.update(record.toEntity())
+    }
+
+    override fun observeDistinctArtistNames(): Flow<List<String>> = dao.getDistinctArtistNames()
+
+    override fun observeDistinctVenueNames(): Flow<List<String>> = dao.getDistinctVenueNames()
 
     private fun LiveRecordEntity.toDomain() = LiveRecord(
         id = id,

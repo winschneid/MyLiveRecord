@@ -5,5 +5,9 @@ import kotlinx.coroutines.flow.Flow
 
 interface LiveRecordRepository {
     fun observeAllRecords(): Flow<List<LiveRecord>>
+    suspend fun getRecordById(id: Long): LiveRecord?
     suspend fun addRecord(record: LiveRecord)
+    suspend fun updateRecord(record: LiveRecord)
+    fun observeDistinctArtistNames(): Flow<List<String>>
+    fun observeDistinctVenueNames(): Flow<List<String>>
 }

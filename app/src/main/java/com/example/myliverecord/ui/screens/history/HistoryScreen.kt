@@ -27,9 +27,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.myliverecord.ui.theme.MyLiveRecordTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -37,10 +39,15 @@ import java.util.Locale
 @Composable
 fun HistoryScreen(
     onNavigateToAdd: () -> Unit,
+    onNavigateToEdit: (id: Long) -> Unit,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    HistoryContent(uiState = uiState, onNavigateToAdd = onNavigateToAdd)
+    HistoryContent(
+        uiState = uiState,
+        onNavigateToAdd = onNavigateToAdd,
+        onCardClick = onNavigateToEdit,
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +55,7 @@ fun HistoryScreen(
 private fun HistoryContent(
     uiState: HistoryUiState,
     onNavigateToAdd: () -> Unit,
+    onCardClick: (id: Long) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -86,7 +94,10 @@ private fun HistoryContent(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     items(uiState.records, key = { it.id }) { record ->
-                        LiveRecordCard(record = record)
+                        LiveRecordCard(
+                            record = record,
+                            onClick = { onCardClick(record.id) },
+                        )
                     }
                 }
             }
@@ -95,8 +106,8 @@ private fun HistoryContent(
 }
 
 @Composable
-private fun LiveRecordCard(record: LiveRecordItem) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun LiveRecordCard(record: LiveRecordItem, onClick: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -144,3 +155,78 @@ private fun LiveRecordCard(record: LiveRecordItem) {
 
 private fun formatDate(timestamp: Long): String =
     SimpleDateFormat("yyyy/MM/dd", Locale.JAPAN).format(Date(timestamp))
+
+// region Previews
+
+private val previewRecords = listOf(
+    LiveRecordItem(
+        id = 1,
+        artistName = "YOASOBI",
+        venueName = "さいたまスーパーアリーナ",
+        seatNumber = "アリーナA-12",
+        date = 1704067200000L,
+        artistVisitCount = 3,
+    ),
+    LiveRecordItem(
+        id = 2,
+        artistName = "Official髭男dism",
+        venueName = "東京ドーム",
+        seatNumber = "1塁側 3F-45",
+        date = 1706745600000L,
+        artistVisitCount = 1,
+    ),
+    LiveRecordItem(
+        id = 3,
+        artistName = "YOASOBI",
+        venueName = "横浜アリーナ",
+        seatNumber = "",
+        date = 1709424000000L,
+        artistVisitCount = 3,
+    ),
+)
+
+@Preview(name = "履歴 - ローディング", showBackground = true)
+@Composable
+private fun HistoryLoadingPreview() {
+    MyLiveRecordTheme {
+        HistoryContent(
+            uiState = HistoryUiState(isLoading = true),
+            onNavigateToAdd = {},
+            onCardClick = {},
+        )
+    }
+}
+
+@Preview(name = "履歴 - 空", showBackground = true)
+@Composable
+private fun HistoryEmptyPreview() {
+    MyLiveRecordTheme {
+        HistoryContent(
+            uiState = HistoryUiState(records = emptyList(), isLoading = false),
+            onNavigateToAdd = {},
+            onCardClick = {},
+        )
+    }
+}
+
+@Preview(name = "履歴 - データあり", showBackground = true)
+@Composable
+private fun HistoryWithDataPreview() {
+    MyLiveRecordTheme {
+        HistoryContent(
+            uiState = HistoryUiState(records = previewRecords, isLoading = false),
+            onNavigateToAdd = {},
+            onCardClick = {},
+        )
+    }
+}
+
+@Preview(name = "履歴カード", showBackground = true)
+@Composable
+private fun LiveRecordCardPreview() {
+    MyLiveRecordTheme {
+        LiveRecordCard(record = previewRecords.first(), onClick = {})
+    }
+}
+
+// endregion
