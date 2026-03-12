@@ -11,11 +11,11 @@ import javax.inject.Inject
 
 data class LiveRecordItem(
     val id: Long,
-    val artistName: String,
+    val artistNames: List<String>,
     val venueName: String,
     val seatNumber: String,
     val date: Long,
-    val artistVisitCount: Int,
+    val artistVisitCounts: Map<String, Int>, // アーティスト名 → 累計回数
 )
 
 data class HistoryUiState(
@@ -30,15 +30,19 @@ class HistoryViewModel @Inject constructor(
 
     val uiState = getLiveRecords()
         .map { records ->
-            val artistCounts = records.groupingBy { it.artistName }.eachCount()
+            // 各アーティストが何回登場するかを集計（複数アーティスト記録も含む）
+            val artistCounts = records
+                .flatMap { it.artistNames }
+                .groupingBy { it }
+                .eachCount()
             val items = records.map { record ->
                 LiveRecordItem(
                     id = record.id,
-                    artistName = record.artistName,
+                    artistNames = record.artistNames,
                     venueName = record.venueName,
                     seatNumber = record.seatNumber,
                     date = record.date,
-                    artistVisitCount = artistCounts[record.artistName] ?: 1,
+                    artistVisitCounts = record.artistNames.associateWith { artistCounts[it] ?: 1 },
                 )
             }
             HistoryUiState(records = items, isLoading = false)

@@ -112,22 +112,25 @@ private fun LiveRecordCard(record: LiveRecordItem, onClick: () -> Unit) {
             modifier = Modifier.fillMaxWidth().padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = record.artistName,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-                Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+            record.artistNames.forEach { artistName ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        text = "${record.artistVisitCount}回目",
-                        color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.padding(horizontal = 4.dp),
+                        text = artistName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f),
                     )
+                    Badge(containerColor = MaterialTheme.colorScheme.primaryContainer) {
+                        Text(
+                            text = "${record.artistVisitCounts[artistName] ?: 1}回目",
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.padding(horizontal = 4.dp),
+                        )
+                    }
                 }
             }
             Text(
@@ -161,27 +164,27 @@ private fun formatDate(timestamp: Long): String =
 private val previewRecords = listOf(
     LiveRecordItem(
         id = 1,
-        artistName = "YOASOBI",
+        artistNames = listOf("YOASOBI"),
         venueName = "さいたまスーパーアリーナ",
         seatNumber = "アリーナA-12",
         date = 1704067200000L,
-        artistVisitCount = 3,
+        artistVisitCounts = mapOf("YOASOBI" to 3),
     ),
     LiveRecordItem(
         id = 2,
-        artistName = "Official髭男dism",
+        artistNames = listOf("Official髭男dism"),
         venueName = "東京ドーム",
         seatNumber = "1塁側 3F-45",
         date = 1706745600000L,
-        artistVisitCount = 1,
+        artistVisitCounts = mapOf("Official髭男dism" to 1),
     ),
     LiveRecordItem(
         id = 3,
-        artistName = "YOASOBI",
-        venueName = "横浜アリーナ",
-        seatNumber = "",
+        artistNames = listOf("YOASOBI", "King Gnu", "Vaundy"),
+        venueName = "国立競技場",
+        seatNumber = "S席 12-34",
         date = 1709424000000L,
-        artistVisitCount = 3,
+        artistVisitCounts = mapOf("YOASOBI" to 3, "King Gnu" to 1, "Vaundy" to 2),
     ),
 )
 

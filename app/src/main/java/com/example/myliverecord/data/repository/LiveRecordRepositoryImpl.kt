@@ -26,13 +26,25 @@ class LiveRecordRepositoryImpl @Inject constructor(
         dao.update(record.toEntity())
     }
 
-    override fun observeDistinctArtistNames(): Flow<List<String>> = dao.getDistinctArtistNames()
+    override suspend fun deleteRecord(id: Long) {
+        dao.deleteById(id)
+    }
+
+    override fun observeDistinctArtistNames(): Flow<List<String>> =
+        dao.getAllArtistNamesRaw().map { rawList ->
+            rawList
+                .flatMap { it.split(",") }
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .distinct()
+                .sorted()
+        }
 
     override fun observeDistinctVenueNames(): Flow<List<String>> = dao.getDistinctVenueNames()
 
     private fun LiveRecordEntity.toDomain() = LiveRecord(
         id = id,
-        artistName = artistName,
+        artistNames = artistNames.split(",").map { it.trim() }.filter { it.isNotEmpty() },
         venueName = venueName,
         seatNumber = seatNumber,
         date = date,
@@ -40,7 +52,7 @@ class LiveRecordRepositoryImpl @Inject constructor(
 
     private fun LiveRecord.toEntity() = LiveRecordEntity(
         id = id,
-        artistName = artistName,
+        artistNames = artistNames.joinToString(","),
         venueName = venueName,
         seatNumber = seatNumber,
         date = date,

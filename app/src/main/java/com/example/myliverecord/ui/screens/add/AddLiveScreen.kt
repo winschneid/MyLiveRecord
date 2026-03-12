@@ -2,6 +2,7 @@ package com.example.myliverecord.ui.screens.add
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,7 +12,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -20,6 +25,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -33,6 +39,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -69,7 +76,25 @@ private fun AddLiveContent(
     onNavigateBack: () -> Unit,
 ) {
     var showDatePicker by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     val datePickerState = rememberDatePickerState(initialSelectedDateMillis = uiState.date)
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("削除の確認") },
+            text = { Text("このライブ記録を削除しますか？") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showDeleteDialog = false
+                    onAction(AddLiveAction.Delete)
+                }) { Text("削除", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) { Text("キャンセル") }
+            },
+        )
+    }
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -115,12 +140,53 @@ private fun AddLiveContent(
         ) {
             Spacer(Modifier.height(4.dp))
 
-            SuggestTextField(
-                value = uiState.artistName,
-                onValueChange = { onAction(AddLiveAction.UpdateArtistName(it)) },
-                label = "アーティスト名 *",
-                suggestions = uiState.artistSuggestions,
-            )
+            // アーティスト複数入力エリア
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    text = "アーティスト *",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                uiState.artistNames.forEachIndexed { index, artistName ->
+                    val suggestions = uiState.allArtistNames.filter {
+                        artistName.isNotBlank() &&
+                            it.contains(artistName, ignoreCase = true) &&
+                            !it.equals(artistName, ignoreCase = true)
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        SuggestTextField(
+                            value = artistName,
+                            onValueChange = { onAction(AddLiveAction.UpdateArtistName(index, it)) },
+                            label = if (uiState.artistNames.size == 1) "アーティスト名" else "アーティスト ${index + 1}",
+                            suggestions = suggestions,
+                            modifier = Modifier.weight(1f),
+                        )
+                        if (uiState.artistNames.size > 1) {
+                            IconButton(onClick = { onAction(AddLiveAction.RemoveArtist(index)) }) {
+                                Icon(
+                                    imageVector = Icons.Default.Close,
+                                    contentDescription = "削除",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+                }
+                TextButton(
+                    onClick = { onAction(AddLiveAction.AddArtist) },
+                    modifier = Modifier.align(Alignment.Start),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 4.dp),
+                    )
+                    Text("アーティストを追加")
+                }
+            }
 
             SuggestTextField(
                 value = uiState.venueName,
@@ -153,9 +219,22 @@ private fun AddLiveContent(
             Button(
                 onClick = { onAction(AddLiveAction.Save) },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = uiState.artistName.isNotBlank() && uiState.venueName.isNotBlank(),
+                enabled = uiState.artistNames.any { it.isNotBlank() } && uiState.venueName.isNotBlank(),
             ) {
                 Text("保存")
+            }
+
+            if (uiState.isEditMode) {
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                ) {
+                    Text("削除")
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -231,13 +310,30 @@ private fun AddLiveEmptyPreview() {
     }
 }
 
+@Preview(name = "登録 - フェス（複数アーティスト）", showBackground = true)
+@Composable
+private fun AddLiveFestivalPreview() {
+    MyLiveRecordTheme {
+        AddLiveContent(
+            uiState = AddLiveUiState(
+                artistNames = listOf("YOASOBI", "King Gnu", ""),
+                venueName = "国立競技場",
+                seatNumber = "S席 12-34",
+                date = 1704067200000L,
+            ),
+            onAction = {},
+            onNavigateBack = {},
+        )
+    }
+}
+
 @Preview(name = "登録 - 入力済み", showBackground = true)
 @Composable
 private fun AddLiveFilledPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
             uiState = AddLiveUiState(
-                artistName = "YOASOBI",
+                artistNames = listOf("YOASOBI"),
                 venueName = "さいたまスーパーアリーナ",
                 seatNumber = "アリーナA-12",
                 date = 1704067200000L,
@@ -254,26 +350,11 @@ private fun AddLiveEditPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
             uiState = AddLiveUiState(
-                artistName = "YOASOBI",
+                artistNames = listOf("YOASOBI"),
                 venueName = "さいたまスーパーアリーナ",
                 seatNumber = "アリーナA-12",
                 date = 1704067200000L,
                 isEditMode = true,
-            ),
-            onAction = {},
-            onNavigateBack = {},
-        )
-    }
-}
-
-@Preview(name = "登録 - サジェスト表示", showBackground = true)
-@Composable
-private fun AddLiveWithSuggestionsPreview() {
-    MyLiveRecordTheme {
-        AddLiveContent(
-            uiState = AddLiveUiState(
-                artistName = "YO",
-                artistSuggestions = listOf("YOASOBI", "Yonezu Kenshi"),
             ),
             onAction = {},
             onNavigateBack = {},

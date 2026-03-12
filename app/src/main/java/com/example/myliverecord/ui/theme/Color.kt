@@ -2,10 +2,12 @@ package com.example.myliverecord.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+// Dark theme (light tones on dark background)
+val Blue80 = Color(0xFF9ECAFF)
+val BlueGrey80 = Color(0xFFBBC7DB)
+val Teal80 = Color(0xFF72D5FA)
 
-val Purple40 = Color(0xFF6650A4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+// Light theme (dark tones on light background)
+val Blue40 = Color(0xFF0061A4)
+val BlueGrey40 = Color(0xFF4A6080)
+val Teal40 = Color(0xFF006880)

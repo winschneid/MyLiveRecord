@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.myliverecord.domain.model.LiveRecord
 import com.example.myliverecord.domain.usecase.AddLiveRecordUseCase
+import com.example.myliverecord.domain.usecase.DeleteLiveRecordUseCase
 import com.example.myliverecord.domain.usecase.GetArtistNamesUseCase
 import com.example.myliverecord.domain.usecase.GetLiveRecordByIdUseCase
 import com.example.myliverecord.domain.usecase.GetVenueNamesUseCase
@@ -19,26 +20,29 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AddLiveUiState(
-    val artistName: String = "",
+    val artistNames: List<String> = listOf(""),
     val venueName: String = "",
     val seatNumber: String = "",
     val date: Long = System.currentTimeMillis(),
     val isSaved: Boolean = false,
     val isEditMode: Boolean = false,
-    val artistSuggestions: List<String> = emptyList(),
+    val allArtistNames: List<String> = emptyList(), // サジェスト用（フィルタはUI側で実施）
     val venueSuggestions: List<String> = emptyList(),
 )
 
 sealed interface AddLiveAction {
-    data class UpdateArtistName(val value: String) : AddLiveAction
+    data class UpdateArtistName(val index: Int, val value: String) : AddLiveAction
+    data object AddArtist : AddLiveAction
+    data class RemoveArtist(val index: Int) : AddLiveAction
     data class UpdateVenueName(val value: String) : AddLiveAction
     data class UpdateSeatNumber(val value: String) : AddLiveAction
     data class UpdateDate(val value: Long) : AddLiveAction
     data object Save : AddLiveAction
+    data object Delete : AddLiveAction
 }
 
 private data class InputState(
-    val artistName: String = "",
+    val artistNames: List<String> = listOf(""),
     val venueName: String = "",
     val seatNumber: String = "",
     val date: Long = System.currentTimeMillis(),
@@ -50,6 +54,7 @@ class AddLiveViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val addLiveRecord: AddLiveRecordUseCase,
     private val updateLiveRecord: UpdateLiveRecordUseCase,
+    private val deleteLiveRecord: DeleteLiveRecordUseCase,
     private val getLiveRecordById: GetLiveRecordByIdUseCase,
     getArtistNames: GetArtistNamesUseCase,
     getVenueNames: GetVenueNamesUseCase,
@@ -65,16 +70,13 @@ class AddLiveViewModel @Inject constructor(
         getVenueNames(),
     ) { input, artistNames, venueNames ->
         AddLiveUiState(
-            artistName = input.artistName,
+            artistNames = input.artistNames,
             venueName = input.venueName,
             seatNumber = input.seatNumber,
             date = input.date,
             isSaved = input.isSaved,
             isEditMode = recordId != null,
-            artistSuggestions = if (input.artistName.isBlank()) emptyList()
-            else artistNames.filter {
-                it.contains(input.artistName, ignoreCase = true) && !it.equals(input.artistName, ignoreCase = true)
-            },
+            allArtistNames = artistNames,
             venueSuggestions = if (input.venueName.isBlank()) emptyList()
             else venueNames.filter {
                 it.contains(input.venueName, ignoreCase = true) && !it.equals(input.venueName, ignoreCase = true)
@@ -91,7 +93,7 @@ class AddLiveViewModel @Inject constructor(
             viewModelScope.launch {
                 getLiveRecordById(recordId)?.let { record ->
                     _input.value = InputState(
-                        artistName = record.artistName,
+                        artistNames = record.artistNames.ifEmpty { listOf("") },
                         venueName = record.venueName,
                         seatNumber = record.seatNumber,
                         date = record.date,
@@ -103,21 +105,43 @@ class AddLiveViewModel @Inject constructor(
 
     fun onAction(action: AddLiveAction) {
         when (action) {
-            is AddLiveAction.UpdateArtistName -> _input.update { it.copy(artistName = action.value) }
+            is AddLiveAction.UpdateArtistName -> _input.update {
+                it.copy(artistNames = it.artistNames.toMutableList().also { list ->
+                    list[action.index] = action.value
+                })
+            }
+            AddLiveAction.AddArtist -> _input.update {
+                it.copy(artistNames = it.artistNames + "")
+            }
+            is AddLiveAction.RemoveArtist -> _input.update {
+                it.copy(artistNames = it.artistNames.toMutableList().also { list ->
+                    list.removeAt(action.index)
+                })
+            }
             is AddLiveAction.UpdateVenueName -> _input.update { it.copy(venueName = action.value) }
             is AddLiveAction.UpdateSeatNumber -> _input.update { it.copy(seatNumber = action.value) }
             is AddLiveAction.UpdateDate -> _input.update { it.copy(date = action.value) }
             AddLiveAction.Save -> save()
+            AddLiveAction.Delete -> delete()
+        }
+    }
+
+    private fun delete() {
+        if (recordId == null) return
+        viewModelScope.launch {
+            deleteLiveRecord(recordId)
+            _input.update { it.copy(isSaved = true) }
         }
     }
 
     private fun save() {
         val input = _input.value
-        if (input.artistName.isBlank() || input.venueName.isBlank()) return
+        val validArtists = input.artistNames.map { it.trim() }.filter { it.isNotEmpty() }
+        if (validArtists.isEmpty() || input.venueName.isBlank()) return
         viewModelScope.launch {
             val record = LiveRecord(
                 id = recordId ?: 0L,
-                artistName = input.artistName.trim(),
+                artistNames = validArtists,
                 venueName = input.venueName.trim(),
                 seatNumber = input.seatNumber.trim(),
                 date = input.date,

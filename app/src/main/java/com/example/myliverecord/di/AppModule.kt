@@ -25,7 +25,9 @@ object DatabaseModule {
             context,
             LiveRecordDatabase::class.java,
             "live_record_db",
-        ).build()
+        )
+            .addMigrations(LiveRecordDatabase.MIGRATION_1_2)
+            .build()
 
     @Provides
     @Singleton

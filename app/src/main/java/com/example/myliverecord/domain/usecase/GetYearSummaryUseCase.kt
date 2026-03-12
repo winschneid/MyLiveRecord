@@ -22,7 +22,8 @@ class GetYearSummaryUseCase @Inject constructor(
                         year = year,
                         totalCount = yearRecords.size,
                         artists = yearRecords
-                            .groupingBy { it.artistName }
+                            .flatMap { it.artistNames }
+                            .groupingBy { it }
                             .eachCount()
                             .entries
                             .sortedByDescending { it.value }

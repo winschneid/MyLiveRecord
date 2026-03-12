@@ -19,11 +19,14 @@ interface LiveRecordDao {
     @Update
     suspend fun update(record: LiveRecordEntity)
 
+    @Query("DELETE FROM live_records WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     @Query("SELECT * FROM live_records WHERE id = :id")
     suspend fun getRecordById(id: Long): LiveRecordEntity?
 
-    @Query("SELECT COUNT(*) FROM live_records WHERE artist_name = :artistName")
-    suspend fun getArtistCount(artistName: String): Int
+    @Query("SELECT COUNT(*) FROM live_records WHERE artist_names = :artistName OR artist_names LIKE :artistNamePrefix OR artist_names LIKE :artistNameSuffix OR artist_names LIKE :artistNameMiddle")
+    suspend fun getArtistCount(artistName: String, artistNamePrefix: String = "$artistName,%", artistNameSuffix: String = "%,$artistName", artistNameMiddle: String = "%,$artistName,%"): Int
 
     @Query(
         """
@@ -33,8 +36,8 @@ interface LiveRecordDao {
     )
     suspend fun getYearCount(year: Int): Int
 
-    @Query("SELECT DISTINCT artist_name FROM live_records ORDER BY artist_name ASC")
-    fun getDistinctArtistNames(): Flow<List<String>>
+    @Query("SELECT artist_names FROM live_records")
+    fun getAllArtistNamesRaw(): Flow<List<String>>
 
     @Query("SELECT DISTINCT venue_name FROM live_records ORDER BY venue_name ASC")
     fun getDistinctVenueNames(): Flow<List<String>>

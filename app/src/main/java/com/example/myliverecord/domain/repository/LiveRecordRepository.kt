@@ -8,6 +8,7 @@ interface LiveRecordRepository {
     suspend fun getRecordById(id: Long): LiveRecord?
     suspend fun addRecord(record: LiveRecord)
     suspend fun updateRecord(record: LiveRecord)
+    suspend fun deleteRecord(id: Long)
     fun observeDistinctArtistNames(): Flow<List<String>>
     fun observeDistinctVenueNames(): Flow<List<String>>
 }
