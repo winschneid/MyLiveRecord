@@ -30,11 +30,18 @@ class HistoryViewModel @Inject constructor(
 
     val uiState = getLiveRecords()
         .map { records ->
-            // 各アーティストが何回登場するかを集計（複数アーティスト記録も含む）
-            val artistCounts = records
-                .flatMap { it.artistNames }
-                .groupingBy { it }
-                .eachCount()
+            // 日付昇順で処理し、そのレコード時点での「n回目」を計算する
+            val artistRunningCounts = mutableMapOf<String, Int>()
+            val visitCountsById = mutableMapOf<Long, Map<String, Int>>()
+            records.sortedBy { it.date }.forEach { record ->
+                val visitCounts = record.artistNames.associateWith { artistName ->
+                    val count = (artistRunningCounts[artistName] ?: 0) + 1
+                    artistRunningCounts[artistName] = count
+                    count
+                }
+                visitCountsById[record.id] = visitCounts
+            }
+            // 表示順（日付降順）は DAO の ORDER BY date DESC を維持
             val items = records.map { record ->
                 LiveRecordItem(
                     id = record.id,
@@ -42,7 +49,7 @@ class HistoryViewModel @Inject constructor(
                     venueName = record.venueName,
                     seatNumber = record.seatNumber,
                     date = record.date,
-                    artistVisitCounts = record.artistNames.associateWith { artistCounts[it] ?: 1 },
+                    artistVisitCounts = visitCountsById[record.id] ?: emptyMap(),
                 )
             }
             HistoryUiState(records = items, isLoading = false)
