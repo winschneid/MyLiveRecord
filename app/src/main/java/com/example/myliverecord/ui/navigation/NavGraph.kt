@@ -20,6 +20,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.myliverecord.ui.screens.add.AddLiveScreen
+import com.example.myliverecord.ui.screens.artist.ArtistDetailScreen
 import com.example.myliverecord.ui.screens.history.HistoryScreen
 import com.example.myliverecord.ui.screens.summary.YearSummaryScreen
 
@@ -75,6 +76,7 @@ fun NavGraph() {
                 HistoryScreen(
                     onNavigateToAdd = { navController.navigate(Routes.AddLive.route) },
                     onNavigateToEdit = { id -> navController.navigate(Routes.EditLive.createRoute(id)) },
+                    onNavigateToArtist = { name -> navController.navigate(Routes.ArtistDetail.createRoute(name)) },
                 )
             }
             composable(Routes.YearSummary.route) {
@@ -88,6 +90,15 @@ fun NavGraph() {
                 arguments = listOf(navArgument("recordId") { type = NavType.LongType }),
             ) {
                 AddLiveScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(
+                route = Routes.ArtistDetail.route,
+                arguments = listOf(navArgument("artistName") { type = NavType.StringType }),
+            ) {
+                ArtistDetailScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToEdit = { id -> navController.navigate(Routes.EditLive.createRoute(id)) },
+                )
             }
         }
     }

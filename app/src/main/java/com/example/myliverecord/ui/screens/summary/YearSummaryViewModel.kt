@@ -12,8 +12,15 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 
+data class OverallSummary(
+    val totalCount: Int,
+    val totalSpend: Long,
+    val artistCount: Int,
+)
+
 data class YearSummaryUiState(
     val years: List<YearSummary> = emptyList(),
+    val overall: OverallSummary? = null,
     val isLoading: Boolean = true,
     val expandedYears: Set<Int> = emptySet(),
 )
@@ -35,6 +42,11 @@ class YearSummaryViewModel @Inject constructor(
     ) { years, expandedYears ->
         YearSummaryUiState(
             years = years,
+            overall = if (years.isEmpty()) null else OverallSummary(
+                totalCount = years.sumOf { it.totalCount },
+                totalSpend = years.sumOf { it.totalSpend },
+                artistCount = years.flatMap { year -> year.artists.map { it.artistName } }.distinct().size,
+            ),
             isLoading = false,
             expandedYears = expandedYears,
         )

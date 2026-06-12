@@ -102,6 +102,20 @@ private fun AddLiveContent(
         )
     }
 
+    uiState.duplicateWarning?.let { warning ->
+        AlertDialog(
+            onDismissRequest = { onAction(AddLiveAction.DismissDuplicateWarning) },
+            title = { Text("同じ日の記録があります") },
+            text = { Text(warning) },
+            confirmButton = {
+                TextButton(onClick = { onAction(AddLiveAction.ConfirmSave) }) { Text("保存") }
+            },
+            dismissButton = {
+                TextButton(onClick = { onAction(AddLiveAction.DismissDuplicateWarning) }) { Text("キャンセル") }
+            },
+        )
+    }
+
     if (showDatePicker) {
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },

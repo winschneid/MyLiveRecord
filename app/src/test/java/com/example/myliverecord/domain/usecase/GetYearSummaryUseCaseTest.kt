@@ -34,10 +34,11 @@ class GetYearSummaryUseCaseTest {
         year: Int,
         artists: List<String>,
         price: Long? = null,
+        venue: String = "venue",
     ) = LiveRecord(
         id = id,
         artistNames = artists,
-        venueName = "venue",
+        venueName = venue,
         seatNumber = "",
         date = midYear(year),
         ticketPrice = price,
@@ -81,6 +82,26 @@ class GetYearSummaryUseCaseTest {
         assertEquals(3, artists[0].count)
         assertEquals("YOASOBI", artists[1].artistName)
         assertEquals(2, artists[1].count)
+    }
+
+    @Test
+    fun `会場は回数の多い順に並ぶ`() = runBlocking {
+        val useCase = GetYearSummaryUseCase(
+            FakeRepository(
+                listOf(
+                    record(1, 2024, listOf("Ado"), venue = "東京ドーム"),
+                    record(2, 2024, listOf("Ado"), venue = "日本武道館"),
+                    record(3, 2024, listOf("Ado"), venue = "東京ドーム"),
+                )
+            )
+        )
+
+        val venues = useCase().first().single().venues
+
+        assertEquals("東京ドーム", venues[0].venueName)
+        assertEquals(2, venues[0].count)
+        assertEquals("日本武道館", venues[1].venueName)
+        assertEquals(1, venues[1].count)
     }
 
     @Test

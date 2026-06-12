@@ -8,15 +8,18 @@ import com.example.myliverecord.domain.usecase.AddLiveRecordUseCase
 import com.example.myliverecord.domain.usecase.DeleteLiveRecordUseCase
 import com.example.myliverecord.domain.usecase.GetArtistNamesUseCase
 import com.example.myliverecord.domain.usecase.GetLiveRecordByIdUseCase
+import com.example.myliverecord.domain.usecase.GetLiveRecordsUseCase
 import com.example.myliverecord.domain.usecase.GetVenueNamesUseCase
 import com.example.myliverecord.domain.usecase.UpdateLiveRecordUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.util.Calendar
 import javax.inject.Inject
 
 data class AddLiveUiState(
@@ -31,6 +34,7 @@ data class AddLiveUiState(
     val isEditMode: Boolean = false,
     val allArtistNames: List<String> = emptyList(), // サジェスト用（フィルタはUI側で実施）
     val venueSuggestions: List<String> = emptyList(),
+    val duplicateWarning: String? = null, // 同日の既存記録がある場合の確認メッセージ
 )
 
 sealed interface AddLiveAction {
@@ -44,6 +48,8 @@ sealed interface AddLiveAction {
     data class UpdateMemo(val value: String) : AddLiveAction
     data class UpdateTicketPrice(val value: String) : AddLiveAction
     data object Save : AddLiveAction
+    data object ConfirmSave : AddLiveAction
+    data object DismissDuplicateWarning : AddLiveAction
     data object Delete : AddLiveAction
 }
 
@@ -56,6 +62,7 @@ private data class InputState(
     val memo: String = "",
     val ticketPriceText: String = "",
     val isSaved: Boolean = false,
+    val duplicateWarning: String? = null,
 )
 
 @HiltViewModel
@@ -65,6 +72,7 @@ class AddLiveViewModel @Inject constructor(
     private val updateLiveRecord: UpdateLiveRecordUseCase,
     private val deleteLiveRecord: DeleteLiveRecordUseCase,
     private val getLiveRecordById: GetLiveRecordByIdUseCase,
+    private val getLiveRecords: GetLiveRecordsUseCase,
     getArtistNames: GetArtistNamesUseCase,
     getVenueNames: GetVenueNamesUseCase,
 ) : ViewModel() {
@@ -87,6 +95,7 @@ class AddLiveViewModel @Inject constructor(
             memo = input.memo,
             ticketPriceText = input.ticketPriceText,
             isSaved = input.isSaved,
+            duplicateWarning = input.duplicateWarning,
             isEditMode = recordId != null,
             allArtistNames = artistNames,
             venueSuggestions = if (input.venueName.isBlank()) emptyList()
@@ -141,7 +150,9 @@ class AddLiveViewModel @Inject constructor(
             is AddLiveAction.UpdateTicketPrice -> _input.update {
                 it.copy(ticketPriceText = action.value.filter { c -> c.isDigit() })
             }
-            AddLiveAction.Save -> save()
+            AddLiveAction.Save -> save(force = false)
+            AddLiveAction.ConfirmSave -> save(force = true)
+            AddLiveAction.DismissDuplicateWarning -> _input.update { it.copy(duplicateWarning = null) }
             AddLiveAction.Delete -> delete()
         }
     }
@@ -154,11 +165,23 @@ class AddLiveViewModel @Inject constructor(
         }
     }
 
-    private fun save() {
+    private fun save(force: Boolean) {
         val input = _input.value
         val validArtists = input.artistNames.map { it.trim() }.filter { it.isNotEmpty() }
         if (validArtists.isEmpty() || input.venueName.isBlank()) return
         viewModelScope.launch {
+            if (!force) {
+                val duplicate = findSameDayRecord(input.date)
+                if (duplicate != null) {
+                    _input.update {
+                        it.copy(
+                            duplicateWarning = "同じ日に「${duplicate.artistNames.joinToString("、")}」" +
+                                "（${duplicate.venueName}）が登録されています。このまま保存しますか？",
+                        )
+                    }
+                    return@launch
+                }
+            }
             val record = LiveRecord(
                 id = recordId ?: 0L,
                 title = input.title.trim(),
@@ -170,7 +193,18 @@ class AddLiveViewModel @Inject constructor(
                 ticketPrice = input.ticketPriceText.toLongOrNull(),
             )
             if (recordId != null) updateLiveRecord(record) else addLiveRecord(record)
-            _input.update { it.copy(isSaved = true) }
+            _input.update { it.copy(duplicateWarning = null, isSaved = true) }
+        }
+    }
+
+    /** 編集中の記録自身を除き、同じ日（ローカルタイムゾーン基準）の既存記録を返す */
+    private suspend fun findSameDayRecord(date: Long): LiveRecord? {
+        val target = Calendar.getInstance().apply { timeInMillis = date }
+        return getLiveRecords().first().firstOrNull { existing ->
+            if (existing.id == recordId) return@firstOrNull false
+            val cal = Calendar.getInstance().apply { timeInMillis = existing.date }
+            cal.get(Calendar.YEAR) == target.get(Calendar.YEAR) &&
+                cal.get(Calendar.DAY_OF_YEAR) == target.get(Calendar.DAY_OF_YEAR)
         }
     }
 }

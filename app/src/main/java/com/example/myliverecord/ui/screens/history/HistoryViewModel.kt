@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.example.myliverecord.data.transfer.LiveRecordsJson
 import com.example.myliverecord.domain.model.LiveRecord
 import com.example.myliverecord.domain.usecase.AddLiveRecordUseCase
+import com.example.myliverecord.domain.usecase.DeleteLiveRecordUseCase
+import com.example.myliverecord.domain.usecase.GetLiveRecordByIdUseCase
 import com.example.myliverecord.domain.usecase.GetLiveRecordsUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -14,11 +16,15 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import javax.inject.Inject
 
 data class LiveRecordItem(
@@ -31,9 +37,21 @@ data class LiveRecordItem(
     val artistVisitCounts: Map<String, Int>, // アーティスト名 → 累計回数
 )
 
+data class HistorySection(
+    val label: String, // 例: 2026年6月
+    val items: List<LiveRecordItem>,
+)
+
 data class HistoryUiState(
-    val records: List<LiveRecordItem> = emptyList(),
+    val sections: List<HistorySection> = emptyList(),
+    val searchQuery: String = "",
+    val hasAnyRecords: Boolean = false,
     val isLoading: Boolean = true,
+)
+
+data class HistoryMessage(
+    val text: String,
+    val withUndo: Boolean = false,
 )
 
 /**
@@ -53,38 +71,83 @@ internal fun computeVisitCounts(records: List<LiveRecord>): Map<Long, Map<String
     return visitCountsById
 }
 
+/**
+ * 検索フィルタを適用し、年月ごとのセクションに分ける。
+ * 「n回目」はフィルタ前の全履歴を基準に計算するため、検索しても値は変わらない。
+ * records は日付降順前提（DAO の ORDER BY を維持）。
+ */
+internal fun buildHistorySections(records: List<LiveRecord>, query: String): List<HistorySection> {
+    val visitCountsById = computeVisitCounts(records)
+    val trimmed = query.trim()
+    val filtered = if (trimmed.isEmpty()) records else records.filter { record ->
+        record.artistNames.any { it.contains(trimmed, ignoreCase = true) } ||
+            record.venueName.contains(trimmed, ignoreCase = true) ||
+            record.title.contains(trimmed, ignoreCase = true)
+    }
+    val monthFormat = SimpleDateFormat("yyyy年M月", Locale.JAPAN)
+    return filtered
+        .map { record ->
+            LiveRecordItem(
+                id = record.id,
+                title = record.title,
+                artistNames = record.artistNames,
+                venueName = record.venueName,
+                seatNumber = record.seatNumber,
+                date = record.date,
+                artistVisitCounts = visitCountsById[record.id] ?: emptyMap(),
+            )
+        }
+        .groupBy { monthFormat.format(Date(it.date)) }
+        .map { (label, items) -> HistorySection(label, items) }
+}
+
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     @ApplicationContext private val context: Context,
     private val getLiveRecords: GetLiveRecordsUseCase,
     private val addLiveRecord: AddLiveRecordUseCase,
+    private val deleteLiveRecord: DeleteLiveRecordUseCase,
+    private val getLiveRecordById: GetLiveRecordByIdUseCase,
 ) : ViewModel() {
 
-    private val _message = MutableStateFlow<String?>(null)
+    private val _searchQuery = MutableStateFlow("")
+    private val _message = MutableStateFlow<HistoryMessage?>(null)
     val message = _message.asStateFlow()
 
-    val uiState = getLiveRecords()
-        .map { records ->
-            val visitCountsById = computeVisitCounts(records)
-            // 表示順（日付降順）は DAO の ORDER BY date DESC を維持
-            val items = records.map { record ->
-                LiveRecordItem(
-                    id = record.id,
-                    title = record.title,
-                    artistNames = record.artistNames,
-                    venueName = record.venueName,
-                    seatNumber = record.seatNumber,
-                    date = record.date,
-                    artistVisitCounts = visitCountsById[record.id] ?: emptyMap(),
-                )
-            }
-            HistoryUiState(records = items, isLoading = false)
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5_000),
-            initialValue = HistoryUiState(),
+    private var pendingUndo: LiveRecord? = null
+
+    val uiState = combine(getLiveRecords(), _searchQuery) { records, query ->
+        HistoryUiState(
+            sections = buildHistorySections(records, query),
+            searchQuery = query,
+            hasAnyRecords = records.isNotEmpty(),
+            isLoading = false,
         )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = HistoryUiState(),
+    )
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.update { query }
+    }
+
+    fun deleteRecord(id: Long) {
+        viewModelScope.launch {
+            val record = getLiveRecordById(id) ?: return@launch
+            deleteLiveRecord(id)
+            pendingUndo = record
+            _message.value = HistoryMessage("削除しました", withUndo = true)
+        }
+    }
+
+    fun undoDelete() {
+        viewModelScope.launch {
+            pendingUndo?.let { addLiveRecord(it.copy(id = 0)) }
+            pendingUndo = null
+        }
+    }
 
     fun exportTo(uri: Uri) {
         viewModelScope.launch {
@@ -98,9 +161,9 @@ class HistoryViewModel @Inject constructor(
                 }
                 records.size
             }.onSuccess { count ->
-                _message.value = "${count}件をエクスポートしました"
+                _message.value = HistoryMessage("${count}件をエクスポートしました")
             }.onFailure {
-                _message.value = "エクスポートに失敗しました"
+                _message.value = HistoryMessage("エクスポートに失敗しました")
             }
         }
     }
@@ -117,9 +180,9 @@ class HistoryViewModel @Inject constructor(
                 records.forEach { addLiveRecord(it) }
                 records.size
             }.onSuccess { count ->
-                _message.value = "${count}件をインポートしました"
+                _message.value = HistoryMessage("${count}件をインポートしました")
             }.onFailure {
-                _message.value = "インポートに失敗しました（ファイル形式を確認してください）"
+                _message.value = HistoryMessage("インポートに失敗しました（ファイル形式を確認してください）")
             }
         }
     }

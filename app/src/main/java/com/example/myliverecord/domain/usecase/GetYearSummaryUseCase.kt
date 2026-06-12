@@ -1,6 +1,7 @@
 package com.example.myliverecord.domain.usecase
 
 import com.example.myliverecord.domain.model.ArtistCount
+import com.example.myliverecord.domain.model.VenueCount
 import com.example.myliverecord.domain.model.YearSummary
 import com.example.myliverecord.domain.repository.LiveRecordRepository
 import kotlinx.coroutines.flow.Flow
@@ -28,6 +29,12 @@ class GetYearSummaryUseCase @Inject constructor(
                             .entries
                             .sortedByDescending { it.value }
                             .map { ArtistCount(it.key, it.value) },
+                        venues = yearRecords
+                            .groupingBy { it.venueName }
+                            .eachCount()
+                            .entries
+                            .sortedByDescending { it.value }
+                            .map { VenueCount(it.key, it.value) },
                         totalSpend = yearRecords.sumOf { it.ticketPrice ?: 0L },
                     )
                 }

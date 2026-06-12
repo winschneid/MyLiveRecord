@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -38,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.myliverecord.domain.model.ArtistCount
+import com.example.myliverecord.domain.model.VenueCount
 import com.example.myliverecord.domain.model.YearSummary
 import com.example.myliverecord.ui.theme.MyLiveRecordTheme
 
@@ -89,6 +91,11 @@ private fun YearSummaryContent(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
+                    uiState.overall?.let { overall ->
+                        item(key = "overall") {
+                            OverallSummaryCard(overall = overall)
+                        }
+                    }
                     items(uiState.years, key = { it.year }) { summary ->
                         YearCard(
                             summary = summary,
@@ -99,6 +106,44 @@ private fun YearSummaryContent(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun OverallSummaryCard(overall: OverallSummary) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer,
+        ),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+        ) {
+            OverallItem(label = "通算", value = "${overall.totalCount}回")
+            OverallItem(label = "アーティスト", value = "${overall.artistCount}組")
+            if (overall.totalSpend > 0) {
+                OverallItem(label = "チケット代", value = "¥%,d".format(overall.totalSpend))
+            }
+        }
+    }
+}
+
+@Composable
+private fun OverallItem(label: String, value: String) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.onPrimaryContainer,
+        )
     }
 }
 
@@ -156,13 +201,27 @@ private fun YearCard(
             ) {
                 Column {
                     HorizontalDivider()
+                    SectionLabel("アーティスト")
                     summary.artists.forEachIndexed { index, artistCount ->
-                        ArtistRow(rank = index + 1, artistCount = artistCount)
+                        RankedRow(rank = index + 1, name = artistCount.artistName, count = artistCount.count)
                         if (index < summary.artists.lastIndex) {
                             HorizontalDivider(
                                 modifier = Modifier.padding(horizontal = 16.dp),
                                 color = MaterialTheme.colorScheme.outlineVariant,
                             )
+                        }
+                    }
+                    if (summary.venues.isNotEmpty()) {
+                        HorizontalDivider()
+                        SectionLabel("会場")
+                        summary.venues.forEachIndexed { index, venueCount ->
+                            RankedRow(rank = index + 1, name = venueCount.venueName, count = venueCount.count)
+                            if (index < summary.venues.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                            }
                         }
                     }
                     if (summary.totalSpend > 0) {
@@ -193,7 +252,17 @@ private fun YearCard(
 }
 
 @Composable
-private fun ArtistRow(rank: Int, artistCount: ArtistCount) {
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 10.dp),
+    )
+}
+
+@Composable
+private fun RankedRow(rank: Int, name: String, count: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -212,12 +281,12 @@ private fun ArtistRow(rank: Int, artistCount: ArtistCount) {
                 modifier = Modifier.width(20.dp),
             )
             Text(
-                text = artistCount.artistName,
+                text = name,
                 style = MaterialTheme.typography.bodyLarge,
             )
         }
         Text(
-            text = "${artistCount.count}回",
+            text = "${count}回",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Medium,
@@ -227,6 +296,12 @@ private fun ArtistRow(rank: Int, artistCount: ArtistCount) {
 
 // region Previews
 
+private val previewOverall = OverallSummary(
+    totalCount = 15,
+    totalSpend = 118800,
+    artistCount = 4,
+)
+
 private val previewYears = listOf(
     YearSummary(
         year = 2025,
@@ -234,6 +309,10 @@ private val previewYears = listOf(
         artists = listOf(
             ArtistCount("Ado", 2),
             ArtistCount("King Gnu", 1),
+        ),
+        venues = listOf(
+            VenueCount("日本武道館", 2),
+            VenueCount("東京ドーム", 1),
         ),
     ),
     YearSummary(
@@ -244,6 +323,11 @@ private val previewYears = listOf(
             ArtistCount("Official髭男dism", 4),
             ArtistCount("Ado", 3),
         ),
+        venues = listOf(
+            VenueCount("さいたまスーパーアリーナ", 6),
+            VenueCount("東京ドーム", 4),
+            VenueCount("国立競技場", 2),
+        ),
         totalSpend = 118800,
     ),
 )
@@ -253,7 +337,7 @@ private val previewYears = listOf(
 private fun YearSummaryCollapsedPreview() {
     MyLiveRecordTheme {
         YearSummaryContent(
-            uiState = YearSummaryUiState(years = previewYears, isLoading = false),
+            uiState = YearSummaryUiState(years = previewYears, overall = previewOverall, isLoading = false),
             onAction = {},
         )
     }
@@ -266,6 +350,7 @@ private fun YearSummaryExpandedPreview() {
         YearSummaryContent(
             uiState = YearSummaryUiState(
                 years = previewYears,
+                overall = previewOverall,
                 isLoading = false,
                 expandedYears = setOf(2024, 2025),
             ),
