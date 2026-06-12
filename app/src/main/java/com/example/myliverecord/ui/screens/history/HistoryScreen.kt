@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -41,6 +42,7 @@ import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -131,6 +133,26 @@ private fun HistoryContent(
     onImportClick: () -> Unit,
 ) {
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
+    var pendingDelete by remember { mutableStateOf<LiveRecordItem?>(null) }
+
+    pendingDelete?.let { target ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("削除の確認") },
+            text = {
+                Text("「${target.artistNames.joinToString("、")}」（${formatDate(target.date)}）を削除しますか？")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingDelete = null
+                    onDeleteRecord(target.id)
+                }) { Text("削除", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) { Text("キャンセル") }
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -219,7 +241,7 @@ private fun HistoryContent(
                                 record = record,
                                 onClick = { onCardClick(record.id) },
                                 onArtistClick = onArtistClick,
-                                onDelete = { onDeleteRecord(record.id) },
+                                onDeleteRequest = { pendingDelete = record },
                             )
                         }
                     }
@@ -305,18 +327,19 @@ private fun DismissibleRecordCard(
     record: LiveRecordItem,
     onClick: () -> Unit,
     onArtistClick: (artistName: String) -> Unit,
-    onDelete: () -> Unit,
+    onDeleteRequest: () -> Unit,
 ) {
-    val currentOnDelete by rememberUpdatedState(onDelete)
+    val currentOnDeleteRequest by rememberUpdatedState(onDeleteRequest)
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
-                currentOnDelete()
-                true
-            } else {
-                false
+                currentOnDeleteRequest()
             }
+            // 確認ダイアログ経由で削除するため、スワイプでは確定させずカードを元の位置に戻す
+            false
         },
+        // 誤操作防止のため画面幅の半分までスワイプしないと反応しない
+        positionalThreshold = { totalDistance -> totalDistance * 0.5f },
     )
 
     SwipeToDismissBox(
