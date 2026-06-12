@@ -28,6 +28,7 @@ class GetYearSummaryUseCase @Inject constructor(
                             .entries
                             .sortedByDescending { it.value }
                             .map { ArtistCount(it.key, it.value) },
+                        totalSpend = yearRecords.sumOf { it.ticketPrice ?: 0L },
                     )
                 }
                 .sortedByDescending { it.year }

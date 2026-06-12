@@ -165,6 +165,27 @@ private fun YearCard(
                             )
                         }
                     }
+                    if (summary.totalSpend > 0) {
+                        HorizontalDivider()
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                text = "チケット代合計",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                            Text(
+                                text = "¥%,d".format(summary.totalSpend),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium,
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -223,6 +244,7 @@ private val previewYears = listOf(
             ArtistCount("Official髭男dism", 4),
             ArtistCount("Ado", 3),
         ),
+        totalSpend = 118800,
     ),
 )
 

@@ -1,6 +1,8 @@
 package com.example.myliverecord.ui.screens.add
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -9,11 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -28,6 +32,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +46,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -140,6 +146,14 @@ private fun AddLiveContent(
         ) {
             Spacer(Modifier.height(4.dp))
 
+            OutlinedTextField(
+                value = uiState.title,
+                onValueChange = { onAction(AddLiveAction.UpdateTitle(it)) },
+                label = { Text("公演名・ツアー名・フェス名") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+
             // アーティスト複数入力エリア
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text(
@@ -204,16 +218,47 @@ private fun AddLiveContent(
             )
 
             OutlinedTextField(
-                value = formatDate(uiState.date),
-                onValueChange = {},
-                label = { Text("日付") },
+                value = uiState.ticketPriceText,
+                onValueChange = { onAction(AddLiveAction.UpdateTicketPrice(it)) },
+                label = { Text("チケット代") },
+                prefix = { Text("¥") },
                 modifier = Modifier.fillMaxWidth(),
-                readOnly = true,
-                trailingIcon = {
-                    TextButton(onClick = { showDatePicker = true }) {
-                        Text("変更")
-                    }
-                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            )
+
+            // readOnly の TextField はタップを拾わないため、透明なオーバーレイで全体をタップ可能にする
+            Box {
+                OutlinedTextField(
+                    value = formatDate(uiState.date),
+                    onValueChange = {},
+                    label = { Text("日付") },
+                    modifier = Modifier.fillMaxWidth(),
+                    readOnly = true,
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        disabledTrailingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                    trailingIcon = {
+                        Icon(imageVector = Icons.Default.DateRange, contentDescription = "日付を選択")
+                    },
+                )
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .clickable { showDatePicker = true },
+                )
+            }
+
+            OutlinedTextField(
+                value = uiState.memo,
+                onValueChange = { onAction(AddLiveAction.UpdateMemo(it)) },
+                label = { Text("メモ・感想") },
+                modifier = Modifier.fillMaxWidth(),
+                minLines = 3,
             )
 
             Button(
@@ -333,10 +378,13 @@ private fun AddLiveFilledPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
             uiState = AddLiveUiState(
+                title = "THE FILM 2",
                 artistNames = listOf("YOASOBI"),
                 venueName = "さいたまスーパーアリーナ",
                 seatNumber = "アリーナA-12",
                 date = 1704067200000L,
+                memo = "最高だった",
+                ticketPriceText = "9900",
             ),
             onAction = {},
             onNavigateBack = {},

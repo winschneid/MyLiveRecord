@@ -9,4 +9,5 @@ data class YearSummary(
     val year: Int,
     val totalCount: Int,
     val artists: List<ArtistCount>,
+    val totalSpend: Long = 0,
 )

@@ -20,10 +20,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AddLiveUiState(
+    val title: String = "",
     val artistNames: List<String> = listOf(""),
     val venueName: String = "",
     val seatNumber: String = "",
     val date: Long = System.currentTimeMillis(),
+    val memo: String = "",
+    val ticketPriceText: String = "",
     val isSaved: Boolean = false,
     val isEditMode: Boolean = false,
     val allArtistNames: List<String> = emptyList(), // サジェスト用（フィルタはUI側で実施）
@@ -31,21 +34,27 @@ data class AddLiveUiState(
 )
 
 sealed interface AddLiveAction {
+    data class UpdateTitle(val value: String) : AddLiveAction
     data class UpdateArtistName(val index: Int, val value: String) : AddLiveAction
     data object AddArtist : AddLiveAction
     data class RemoveArtist(val index: Int) : AddLiveAction
     data class UpdateVenueName(val value: String) : AddLiveAction
     data class UpdateSeatNumber(val value: String) : AddLiveAction
     data class UpdateDate(val value: Long) : AddLiveAction
+    data class UpdateMemo(val value: String) : AddLiveAction
+    data class UpdateTicketPrice(val value: String) : AddLiveAction
     data object Save : AddLiveAction
     data object Delete : AddLiveAction
 }
 
 private data class InputState(
+    val title: String = "",
     val artistNames: List<String> = listOf(""),
     val venueName: String = "",
     val seatNumber: String = "",
     val date: Long = System.currentTimeMillis(),
+    val memo: String = "",
+    val ticketPriceText: String = "",
     val isSaved: Boolean = false,
 )
 
@@ -70,10 +79,13 @@ class AddLiveViewModel @Inject constructor(
         getVenueNames(),
     ) { input, artistNames, venueNames ->
         AddLiveUiState(
+            title = input.title,
             artistNames = input.artistNames,
             venueName = input.venueName,
             seatNumber = input.seatNumber,
             date = input.date,
+            memo = input.memo,
+            ticketPriceText = input.ticketPriceText,
             isSaved = input.isSaved,
             isEditMode = recordId != null,
             allArtistNames = artistNames,
@@ -93,10 +105,13 @@ class AddLiveViewModel @Inject constructor(
             viewModelScope.launch {
                 getLiveRecordById(recordId)?.let { record ->
                     _input.value = InputState(
+                        title = record.title,
                         artistNames = record.artistNames.ifEmpty { listOf("") },
                         venueName = record.venueName,
                         seatNumber = record.seatNumber,
                         date = record.date,
+                        memo = record.memo,
+                        ticketPriceText = record.ticketPrice?.toString() ?: "",
                     )
                 }
             }
@@ -105,6 +120,7 @@ class AddLiveViewModel @Inject constructor(
 
     fun onAction(action: AddLiveAction) {
         when (action) {
+            is AddLiveAction.UpdateTitle -> _input.update { it.copy(title = action.value) }
             is AddLiveAction.UpdateArtistName -> _input.update {
                 it.copy(artistNames = it.artistNames.toMutableList().also { list ->
                     list[action.index] = action.value
@@ -121,6 +137,10 @@ class AddLiveViewModel @Inject constructor(
             is AddLiveAction.UpdateVenueName -> _input.update { it.copy(venueName = action.value) }
             is AddLiveAction.UpdateSeatNumber -> _input.update { it.copy(seatNumber = action.value) }
             is AddLiveAction.UpdateDate -> _input.update { it.copy(date = action.value) }
+            is AddLiveAction.UpdateMemo -> _input.update { it.copy(memo = action.value) }
+            is AddLiveAction.UpdateTicketPrice -> _input.update {
+                it.copy(ticketPriceText = action.value.filter { c -> c.isDigit() })
+            }
             AddLiveAction.Save -> save()
             AddLiveAction.Delete -> delete()
         }
@@ -141,10 +161,13 @@ class AddLiveViewModel @Inject constructor(
         viewModelScope.launch {
             val record = LiveRecord(
                 id = recordId ?: 0L,
+                title = input.title.trim(),
                 artistNames = validArtists,
                 venueName = input.venueName.trim(),
                 seatNumber = input.seatNumber.trim(),
                 date = input.date,
+                memo = input.memo.trim(),
+                ticketPrice = input.ticketPriceText.toLongOrNull(),
             )
             if (recordId != null) updateLiveRecord(record) else addLiveRecord(record)
             _input.update { it.copy(isSaved = true) }

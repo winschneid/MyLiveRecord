@@ -20,6 +20,23 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // PC間で署名を揃えるための共有keystore。リポジトリがpublicのためgit管理せず、
+            // 新しいPCではバックアップからこのパスにファイルを配置する
+            val sharedKeystore = File(System.getProperty("user.home"), ".android/myliverecord-debug.keystore")
+            check(sharedKeystore.exists()) {
+                "共有デバッグkeystoreが見つかりません: $sharedKeystore\n" +
+                    "バックアップから上記パスに myliverecord-debug.keystore を配置してください。" +
+                    "（別の鍵でビルドすると実機に上書きインストールできなくなります）"
+            }
+            storeFile = sharedKeystore
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -27,6 +44,9 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 個人利用のためreleaseビルドも同じ署名にして上書きインストール可能にする
+            // （ストア公開する場合は専用の鍵に変更すること）
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -39,6 +59,10 @@ android {
     buildFeatures {
         compose = true
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

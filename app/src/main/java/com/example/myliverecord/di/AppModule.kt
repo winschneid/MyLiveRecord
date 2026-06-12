@@ -26,7 +26,10 @@ object DatabaseModule {
             LiveRecordDatabase::class.java,
             "live_record_db",
         )
-            .addMigrations(LiveRecordDatabase.MIGRATION_1_2)
+            .addMigrations(
+                LiveRecordDatabase.MIGRATION_1_2,
+                LiveRecordDatabase.MIGRATION_2_3,
+            )
             .build()
 
     @Provides
