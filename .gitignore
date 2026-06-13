@@ -26,6 +26,8 @@ render.experimental.xml
 # Keystore files
 *.jks
 *.keystore
+# release署名の認証情報（git管理しない。テンプレートは keystore.properties.example）
+keystore.properties
 
 # Google Services (e.g. APIs or Firebase)
 google-services.json

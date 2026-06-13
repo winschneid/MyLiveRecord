@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -12,7 +14,7 @@ android {
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.myliverecord"
+        applicationId = "com.winschneid.myliverecord"
         minSdk = 24
         targetSdk = 35
         versionCode = 1
@@ -21,38 +23,51 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    // 署名の認証情報はリポジトリに含めない。keystore.properties（git管理外）を優先し、
+    // 無ければ環境変数（CI/自動公開用）から読む。
+    val keystorePropsFile = rootProject.file("keystore.properties")
+    val keystoreProps = Properties().apply {
+        if (keystorePropsFile.exists()) keystorePropsFile.inputStream().use { load(it) }
+    }
+    fun signingValue(key: String, env: String): String? =
+        keystoreProps.getProperty(key) ?: System.getenv(env)
+
     signingConfigs {
         getByName("debug") {
-            // PC間で署名を揃えるための共有keystore。リポジトリがpublicのためgit管理せず、
-            // 新しいPCではバックアップからこのパスにファイルを配置する
-            val sharedKeystore = File(System.getProperty("user.home"), ".android/myliverecord-debug.keystore")
-            if (sharedKeystore.exists()) {
-                storeFile = sharedKeystore
-                storePassword = "android"
-                keyAlias = "androiddebugkey"
-                keyPassword = "android"
-            } else {
-                // CI等の共有keystoreが無い環境ではAGP標準のデバッグ署名にフォールバックする。
-                // 実機へ上書きインストールする端末でビルドする場合は、必ずこの鍵を配置すること
-                // （別の鍵でビルドすると既存データが消える）。
-                logger.warn(
-                    "共有デバッグkeystoreが見つかりません ($sharedKeystore)。標準のデバッグ署名でビルドします。" +
-                        "実機に上書きインストールする場合はバックアップから配置してください。",
-                )
+            // 任意: debug署名を端末間で揃えたい場合のみ keystore.properties で上書きする。
+            // 未設定なら AGP 標準のデバッグ署名を使う。
+            signingValue("debugStoreFile", "DEBUG_STORE_FILE")?.let { storePath ->
+                storeFile = file(storePath)
+                storePassword = signingValue("debugStorePassword", "DEBUG_STORE_PASSWORD")
+                keyAlias = signingValue("debugKeyAlias", "DEBUG_KEY_ALIAS")
+                keyPassword = signingValue("debugKeyPassword", "DEBUG_KEY_PASSWORD")
+            }
+        }
+        create("release") {
+            // Play公開用のアップロード鍵。keystore.properties または環境変数で指定する。
+            signingValue("storeFile", "RELEASE_STORE_FILE")?.let { storePath ->
+                storeFile = file(storePath)
+                storePassword = signingValue("storePassword", "RELEASE_STORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "RELEASE_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "RELEASE_KEY_PASSWORD")
             }
         }
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // 個人利用のためreleaseビルドも同じ署名にして上書きインストール可能にする
-            // （ストア公開する場合は専用の鍵に変更すること）
-            signingConfig = signingConfigs.getByName("debug")
+            // release署名情報が揃っている時だけ専用鍵で署名する。
+            // 無い環境（CI・鍵未配置のローカル）ではreleaseは未署名でビルドされる。
+            val releaseSigning = signingConfigs.getByName("release")
+            if (releaseSigning.storeFile != null) {
+                signingConfig = releaseSigning
+            }
         }
     }
     compileOptions {
