@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Android 13+ のテーマアイコン用。単色シルエット（音符は抜き＝evenOdd）。色はシステムが再着色 -->
+    <group
+        android:pivotX="54"
+        android:pivotY="54"
+        android:rotation="-12">
+        <path
+            android:fillColor="#FF000000"
+            android:fillType="evenOdd"
+            android:pathData="M32,42 h44 a4,4 0 0 1 4,4 v6 a5,5 0 0 0 0,10 v6 a4,4 0 0 1 -4,4 h-44 a4,4 0 0 1 -4,-4 v-6 a5,5 0 0 0 0,-10 v-6 a4,4 0 0 1 4,-4 z M43.8,58 a4.2,4.2 0 1 0 8.4,0 a4.2,4.2 0 1 0 -8.4,0 z M51.5,44 h3 v15 h-3 z M51.5,44 h6 v3 h-6 z" />
+    </group>
+</vector>
