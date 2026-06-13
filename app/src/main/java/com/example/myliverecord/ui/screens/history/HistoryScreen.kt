@@ -76,6 +76,7 @@ fun HistoryScreen(
     onNavigateToAdd: () -> Unit,
     onNavigateToEdit: (id: Long) -> Unit,
     onNavigateToArtist: (artistName: String) -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: HistoryViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -116,6 +117,7 @@ fun HistoryScreen(
             exportLauncher.launch("live_records_$today.json")
         },
         onImportClick = { importLauncher.launch(arrayOf("*/*")) },
+        onSettingsClick = onNavigateToSettings,
     )
 }
 
@@ -131,6 +133,7 @@ private fun HistoryContent(
     onSearchQueryChange: (String) -> Unit,
     onExportClick: () -> Unit,
     onImportClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     var isSearchActive by rememberSaveable { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<LiveRecordItem?>(null) }
@@ -175,6 +178,7 @@ private fun HistoryContent(
                         HistoryMenu(
                             onExportClick = onExportClick,
                             onImportClick = onImportClick,
+                            onSettingsClick = onSettingsClick,
                         )
                     },
                 )
@@ -299,6 +303,7 @@ private fun SearchTopBar(
 private fun HistoryMenu(
     onExportClick: () -> Unit,
     onImportClick: () -> Unit,
+    onSettingsClick: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     IconButton(onClick = { expanded = true }) {
@@ -317,6 +322,13 @@ private fun HistoryMenu(
             onClick = {
                 expanded = false
                 onImportClick()
+            },
+        )
+        DropdownMenuItem(
+            text = { Text("設定") },
+            onClick = {
+                expanded = false
+                onSettingsClick()
             },
         )
     }
@@ -497,6 +509,7 @@ internal fun HistoryLoadingPreview() {
             onSearchQueryChange = {},
             onExportClick = {},
             onImportClick = {},
+            onSettingsClick = {},
         )
     }
 }
@@ -515,6 +528,7 @@ internal fun HistoryEmptyPreview() {
             onSearchQueryChange = {},
             onExportClick = {},
             onImportClick = {},
+            onSettingsClick = {},
         )
     }
 }
@@ -537,6 +551,7 @@ internal fun HistoryWithDataPreview() {
             onSearchQueryChange = {},
             onExportClick = {},
             onImportClick = {},
+            onSettingsClick = {},
         )
     }
 }
@@ -560,6 +575,7 @@ internal fun HistoryNoSearchResultPreview() {
             onSearchQueryChange = {},
             onExportClick = {},
             onImportClick = {},
+            onSettingsClick = {},
         )
     }
 }

@@ -22,6 +22,7 @@ import androidx.navigation.navArgument
 import com.example.myliverecord.ui.screens.add.AddLiveScreen
 import com.example.myliverecord.ui.screens.artist.ArtistDetailScreen
 import com.example.myliverecord.ui.screens.history.HistoryScreen
+import com.example.myliverecord.ui.screens.settings.SettingsScreen
 import com.example.myliverecord.ui.screens.summary.YearSummaryScreen
 
 private val bottomNavRoutes = setOf(Routes.History.route, Routes.YearSummary.route)
@@ -77,6 +78,7 @@ fun NavGraph() {
                     onNavigateToAdd = { navController.navigate(Routes.AddLive.route) },
                     onNavigateToEdit = { id -> navController.navigate(Routes.EditLive.createRoute(id)) },
                     onNavigateToArtist = { name -> navController.navigate(Routes.ArtistDetail.createRoute(name)) },
+                    onNavigateToSettings = { navController.navigate(Routes.Settings.route) },
                 )
             }
             composable(Routes.YearSummary.route) {
@@ -84,6 +86,9 @@ fun NavGraph() {
             }
             composable(Routes.AddLive.route) {
                 AddLiveScreen(onNavigateBack = { navController.popBackStack() })
+            }
+            composable(Routes.Settings.route) {
+                SettingsScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(
                 route = Routes.EditLive.route,
