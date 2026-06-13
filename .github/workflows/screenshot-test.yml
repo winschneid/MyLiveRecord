@@ -1,0 +1,43 @@
+name: Screenshot Test
+
+on:
+  pull_request:
+    # UIに関係ないPRでも軽量なので常に実行する。重い場合は paths でビルド対象を絞る
+    branches: [main]
+
+# 同一PRへの連続pushでは古い実行をキャンセルする
+concurrency:
+  group: screenshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-screenshots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate Compose preview screenshots
+        run: ./gradlew validateDebugScreenshotTest
+
+      # 差分があった場合（テスト失敗時）に比較レポートと画像をアーティファクトとして保存。
+      # HTMLレポート（reports/）が rendered/diffs（outputs/）の画像を参照する構成なので両方含める。
+      # ダウンロードして index.html を開けば「期待画像 / 実際の描画 / 差分」を目視確認できる。
+      - name: Upload screenshot diff report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshot-diff-report
+          path: |
+            app/build/reports/screenshotTest/preview/debug/
+            app/build/outputs/screenshotTest-results/preview/debug/
+          if-no-files-found: ignore

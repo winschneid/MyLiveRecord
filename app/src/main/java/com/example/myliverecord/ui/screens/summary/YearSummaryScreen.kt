@@ -334,7 +334,7 @@ private val previewYears = listOf(
 
 @Preview(name = "年別集計 - 折りたたみ", showBackground = true)
 @Composable
-private fun YearSummaryCollapsedPreview() {
+internal fun YearSummaryCollapsedPreview() {
     MyLiveRecordTheme {
         YearSummaryContent(
             uiState = YearSummaryUiState(years = previewYears, overall = previewOverall, isLoading = false),
@@ -345,7 +345,7 @@ private fun YearSummaryCollapsedPreview() {
 
 @Preview(name = "年別集計 - 展開", showBackground = true)
 @Composable
-private fun YearSummaryExpandedPreview() {
+internal fun YearSummaryExpandedPreview() {
     MyLiveRecordTheme {
         YearSummaryContent(
             uiState = YearSummaryUiState(

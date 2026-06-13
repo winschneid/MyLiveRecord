@@ -196,7 +196,7 @@ private fun formatDate(timestamp: Long): String =
 
 @Preview(name = "アーティスト別履歴", showBackground = true)
 @Composable
-private fun ArtistDetailPreview() {
+internal fun ArtistDetailPreview() {
     MyLiveRecordTheme {
         ArtistDetailContent(
             uiState = ArtistDetailUiState(
