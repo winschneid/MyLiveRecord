@@ -1,0 +1,43 @@
+name: Update Screenshots
+
+# 参照画像はCI（Linux）で描画したものを基準にするため、UIを変更したら
+# このワークフローを手動実行して参照画像を再生成・コミットする。
+# 使い方: GitHubのActionsタブ → "Update Screenshots" → Run workflow で対象ブランチを選ぶ。
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-references:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Regenerate reference screenshots
+        run: ./gradlew updateDebugScreenshotTest
+
+      - name: Commit updated references
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -n "$(git status --porcelain app/src/debug/screenshotTest/reference)" ]; then
+            git add app/src/debug/screenshotTest/reference
+            git commit -m "スクリーンショット参照画像を更新 [skip ci]"
+            git push
+          else
+            echo "参照画像に差分なし"
+          fi

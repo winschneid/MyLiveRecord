@@ -485,7 +485,7 @@ private val previewSections = listOf(
 
 @Preview(name = "履歴 - ローディング", showBackground = true)
 @Composable
-private fun HistoryLoadingPreview() {
+internal fun HistoryLoadingPreview() {
     MyLiveRecordTheme {
         HistoryContent(
             uiState = HistoryUiState(isLoading = true),
@@ -503,7 +503,7 @@ private fun HistoryLoadingPreview() {
 
 @Preview(name = "履歴 - 空", showBackground = true)
 @Composable
-private fun HistoryEmptyPreview() {
+internal fun HistoryEmptyPreview() {
     MyLiveRecordTheme {
         HistoryContent(
             uiState = HistoryUiState(isLoading = false),
@@ -521,7 +521,7 @@ private fun HistoryEmptyPreview() {
 
 @Preview(name = "履歴 - データあり", showBackground = true)
 @Composable
-private fun HistoryWithDataPreview() {
+internal fun HistoryWithDataPreview() {
     MyLiveRecordTheme {
         HistoryContent(
             uiState = HistoryUiState(
@@ -543,7 +543,7 @@ private fun HistoryWithDataPreview() {
 
 @Preview(name = "履歴 - 検索ヒットなし", showBackground = true)
 @Composable
-private fun HistoryNoSearchResultPreview() {
+internal fun HistoryNoSearchResultPreview() {
     MyLiveRecordTheme {
         HistoryContent(
             uiState = HistoryUiState(

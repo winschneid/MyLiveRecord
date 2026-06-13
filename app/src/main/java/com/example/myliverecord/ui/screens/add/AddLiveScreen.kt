@@ -359,7 +359,7 @@ private fun formatDate(timestamp: Long): String =
 
 @Preview(name = "登録 - 空", showBackground = true)
 @Composable
-private fun AddLiveEmptyPreview() {
+internal fun AddLiveEmptyPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
             uiState = AddLiveUiState(),
@@ -371,7 +371,7 @@ private fun AddLiveEmptyPreview() {
 
 @Preview(name = "登録 - フェス（複数アーティスト）", showBackground = true)
 @Composable
-private fun AddLiveFestivalPreview() {
+internal fun AddLiveFestivalPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
             uiState = AddLiveUiState(
@@ -388,7 +388,7 @@ private fun AddLiveFestivalPreview() {
 
 @Preview(name = "登録 - 入力済み", showBackground = true)
 @Composable
-private fun AddLiveFilledPreview() {
+internal fun AddLiveFilledPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
             uiState = AddLiveUiState(
@@ -408,7 +408,7 @@ private fun AddLiveFilledPreview() {
 
 @Preview(name = "編集モード", showBackground = true)
 @Composable
-private fun AddLiveEditPreview() {
+internal fun AddLiveEditPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
             uiState = AddLiveUiState(

@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.screenshot)
 }
 
 android {
@@ -25,15 +26,20 @@ android {
             // PC間で署名を揃えるための共有keystore。リポジトリがpublicのためgit管理せず、
             // 新しいPCではバックアップからこのパスにファイルを配置する
             val sharedKeystore = File(System.getProperty("user.home"), ".android/myliverecord-debug.keystore")
-            check(sharedKeystore.exists()) {
-                "共有デバッグkeystoreが見つかりません: $sharedKeystore\n" +
-                    "バックアップから上記パスに myliverecord-debug.keystore を配置してください。" +
-                    "（別の鍵でビルドすると実機に上書きインストールできなくなります）"
+            if (sharedKeystore.exists()) {
+                storeFile = sharedKeystore
+                storePassword = "android"
+                keyAlias = "androiddebugkey"
+                keyPassword = "android"
+            } else {
+                // CI等の共有keystoreが無い環境ではAGP標準のデバッグ署名にフォールバックする。
+                // 実機へ上書きインストールする端末でビルドする場合は、必ずこの鍵を配置すること
+                // （別の鍵でビルドすると既存データが消える）。
+                logger.warn(
+                    "共有デバッグkeystoreが見つかりません ($sharedKeystore)。標準のデバッグ署名でビルドします。" +
+                        "実機に上書きインストールする場合はバックアップから配置してください。",
+                )
             }
-            storeFile = sharedKeystore
-            storePassword = "android"
-            keyAlias = "androiddebugkey"
-            keyPassword = "android"
         }
     }
 
@@ -59,6 +65,8 @@ android {
     buildFeatures {
         compose = true
     }
+    @Suppress("UnstableApiUsage")
+    experimentalProperties["android.experimental.enableScreenshotTest"] = true
 }
 
 ksp {
@@ -87,6 +95,10 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
+
+    // Compose Preview Screenshot Testing（src/screenshotTest の @Preview をレンダリングして比較）
+    screenshotTestImplementation(platform(libs.androidx.compose.bom))
+    screenshotTestImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
