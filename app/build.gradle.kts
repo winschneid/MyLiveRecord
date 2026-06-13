@@ -111,6 +111,9 @@ dependencies {
     implementation(libs.room.ktx)
     ksp(libs.room.compiler)
 
+    // DataStore（設定の永続化）
+    implementation(libs.androidx.datastore.preferences)
+
     // Compose Preview Screenshot Testing（src/screenshotTest の @Preview をレンダリングして比較）
     screenshotTestImplementation(platform(libs.androidx.compose.bom))
     screenshotTestImplementation(libs.androidx.ui.tooling)

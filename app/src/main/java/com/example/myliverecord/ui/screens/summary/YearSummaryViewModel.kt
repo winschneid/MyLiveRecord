@@ -2,6 +2,7 @@ package com.example.myliverecord.ui.screens.summary
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.myliverecord.data.settings.SettingsRepository
 import com.example.myliverecord.domain.model.YearSummary
 import com.example.myliverecord.domain.usecase.GetYearSummaryUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,6 +24,7 @@ data class YearSummaryUiState(
     val overall: OverallSummary? = null,
     val isLoading: Boolean = true,
     val expandedYears: Set<Int> = emptySet(),
+    val showSpending: Boolean = false,
 )
 
 sealed interface YearSummaryAction {
@@ -32,6 +34,7 @@ sealed interface YearSummaryAction {
 @HiltViewModel
 class YearSummaryViewModel @Inject constructor(
     getYearSummary: GetYearSummaryUseCase,
+    settingsRepository: SettingsRepository,
 ) : ViewModel() {
 
     private val _expandedYears = MutableStateFlow<Set<Int>>(emptySet())
@@ -39,7 +42,8 @@ class YearSummaryViewModel @Inject constructor(
     val uiState = combine(
         getYearSummary(),
         _expandedYears,
-    ) { years, expandedYears ->
+        settingsRepository.showSpending,
+    ) { years, expandedYears, showSpending ->
         YearSummaryUiState(
             years = years,
             overall = if (years.isEmpty()) null else OverallSummary(
@@ -49,6 +53,7 @@ class YearSummaryViewModel @Inject constructor(
             ),
             isLoading = false,
             expandedYears = expandedYears,
+            showSpending = showSpending,
         )
     }.stateIn(
         scope = viewModelScope,

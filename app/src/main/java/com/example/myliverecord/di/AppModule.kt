@@ -1,6 +1,10 @@
 package com.example.myliverecord.di
 
 import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.PreferenceDataStoreFactory
+import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
 import com.example.myliverecord.data.local.LiveRecordDatabase
 import com.example.myliverecord.data.local.dao.LiveRecordDao
@@ -35,6 +39,13 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideLiveRecordDao(db: LiveRecordDatabase): LiveRecordDao = db.liveRecordDao()
+
+    @Provides
+    @Singleton
+    fun provideSettingsDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
+        PreferenceDataStoreFactory.create {
+            context.preferencesDataStoreFile("settings")
+        }
 }
 
 @Module

@@ -93,13 +93,14 @@ private fun YearSummaryContent(
                 ) {
                     uiState.overall?.let { overall ->
                         item(key = "overall") {
-                            OverallSummaryCard(overall = overall)
+                            OverallSummaryCard(overall = overall, showSpending = uiState.showSpending)
                         }
                     }
                     items(uiState.years, key = { it.year }) { summary ->
                         YearCard(
                             summary = summary,
                             isExpanded = summary.year in uiState.expandedYears,
+                            showSpending = uiState.showSpending,
                             onToggle = { onAction(YearSummaryAction.ToggleYear(summary.year)) },
                         )
                     }
@@ -110,7 +111,7 @@ private fun YearSummaryContent(
 }
 
 @Composable
-private fun OverallSummaryCard(overall: OverallSummary) {
+private fun OverallSummaryCard(overall: OverallSummary, showSpending: Boolean) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
@@ -123,7 +124,7 @@ private fun OverallSummaryCard(overall: OverallSummary) {
         ) {
             OverallItem(label = "通算", value = "${overall.totalCount}回")
             OverallItem(label = "アーティスト", value = "${overall.artistCount}組")
-            if (overall.totalSpend > 0) {
+            if (showSpending && overall.totalSpend > 0) {
                 OverallItem(label = "チケット代", value = "¥%,d".format(overall.totalSpend))
             }
         }
@@ -151,6 +152,7 @@ private fun OverallItem(label: String, value: String) {
 private fun YearCard(
     summary: YearSummary,
     isExpanded: Boolean,
+    showSpending: Boolean,
     onToggle: () -> Unit,
 ) {
     val arrowRotation by animateFloatAsState(
@@ -224,7 +226,7 @@ private fun YearCard(
                             }
                         }
                     }
-                    if (summary.totalSpend > 0) {
+                    if (showSpending && summary.totalSpend > 0) {
                         HorizontalDivider()
                         Row(
                             modifier = Modifier
@@ -353,6 +355,7 @@ internal fun YearSummaryExpandedPreview() {
                 overall = previewOverall,
                 isLoading = false,
                 expandedYears = setOf(2024, 2025),
+                showSpending = true,
             ),
             onAction = {},
         )
