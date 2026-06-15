@@ -362,7 +362,9 @@ private fun formatDate(timestamp: Long): String =
 internal fun AddLiveEmptyPreview() {
     MyLiveRecordTheme {
         AddLiveContent(
-            uiState = AddLiveUiState(),
+            // 既定 date は System.currentTimeMillis() で日替わりするため、
+            // スクリーンショットを決定論的にするよう固定値を渡す。
+            uiState = AddLiveUiState(date = 1704067200000L),
             onAction = {},
             onNavigateBack = {},
         )
