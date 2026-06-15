@@ -10,7 +10,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.myliverecord"
+    namespace = "com.winschneid.myliverecord"
     compileSdk = 35
 
     defaultConfig {

@@ -1,0 +1,71 @@
+package com.winschneid.myliverecord.ui.screens.summary
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.winschneid.myliverecord.data.settings.SettingsRepository
+import com.winschneid.myliverecord.domain.model.YearSummary
+import com.winschneid.myliverecord.domain.usecase.GetYearSummaryUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import javax.inject.Inject
+
+data class OverallSummary(
+    val totalCount: Int,
+    val totalSpend: Long,
+    val artistCount: Int,
+)
+
+data class YearSummaryUiState(
+    val years: List<YearSummary> = emptyList(),
+    val overall: OverallSummary? = null,
+    val isLoading: Boolean = true,
+    val expandedYears: Set<Int> = emptySet(),
+    val showSpending: Boolean = false,
+)
+
+sealed interface YearSummaryAction {
+    data class ToggleYear(val year: Int) : YearSummaryAction
+}
+
+@HiltViewModel
+class YearSummaryViewModel @Inject constructor(
+    getYearSummary: GetYearSummaryUseCase,
+    settingsRepository: SettingsRepository,
+) : ViewModel() {
+
+    private val _expandedYears = MutableStateFlow<Set<Int>>(emptySet())
+
+    val uiState = combine(
+        getYearSummary(),
+        _expandedYears,
+        settingsRepository.showSpending,
+    ) { years, expandedYears, showSpending ->
+        YearSummaryUiState(
+            years = years,
+            overall = if (years.isEmpty()) null else OverallSummary(
+                totalCount = years.sumOf { it.totalCount },
+                totalSpend = years.sumOf { it.totalSpend },
+                artistCount = years.flatMap { year -> year.artists.map { it.artistName } }.distinct().size,
+            ),
+            isLoading = false,
+            expandedYears = expandedYears,
+            showSpending = showSpending,
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5_000),
+        initialValue = YearSummaryUiState(),
+    )
+
+    fun onAction(action: YearSummaryAction) {
+        when (action) {
+            is YearSummaryAction.ToggleYear -> _expandedYears.update { current ->
+                if (action.year in current) current - action.year else current + action.year
+            }
+        }
+    }
+}

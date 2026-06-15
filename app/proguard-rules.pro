@@ -1,2 +1,2 @@
 # Add project specific ProGuard rules here.
--keep class com.example.myliverecord.data.local.entity.** { *; }
+-keep class com.winschneid.myliverecord.data.local.entity.** { *; }
