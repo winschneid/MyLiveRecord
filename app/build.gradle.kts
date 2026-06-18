@@ -62,6 +62,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 依存ライブラリの .so 由来のネイティブクラッシュ/ANRを Play Console で
+            // シンボル化できるよう、デバッグシンボルをAABに同梱する（手動アップロード不要）。
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
             // release署名情報が揃っている時だけ専用鍵で署名する。
             // 無い環境（CI・鍵未配置のローカル）ではreleaseは未署名でビルドされる。
             val releaseSigning = signingConfigs.getByName("release")
