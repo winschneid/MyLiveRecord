@@ -11,13 +11,13 @@ plugins {
 
 android {
     namespace = "com.winschneid.myliverecord"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.winschneid.myliverecord"
         minSdk = 24
-        targetSdk = 35
-        versionCode = 2
+        targetSdk = 36
+        versionCode = 3
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
