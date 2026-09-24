@@ -29,6 +29,16 @@ jobs:
       - name: Validate Compose preview screenshots
         run: ./gradlew validateDebugScreenshotTest
 
+      # @PreviewTest の付け忘れ等で1枚も描画されないと、比較対象ゼロのまま成功してしまうため検出する
+      - name: Ensure previews were rendered
+        run: |
+          n=$(find app/build/outputs/screenshotTest-results -name '*.png' | wc -l)
+          echo "描画された画像: $n 枚"
+          if [ "$n" -eq 0 ]; then
+            echo "::error::スクリーンショットが1枚も描画されていません（@PreviewTest が付いているか確認）"
+            exit 1
+          fi
+
       # 差分があった場合（テスト失敗時）に比較レポートと画像をアーティファクトとして保存。
       # HTMLレポート（reports/）が rendered/diffs（outputs/）の画像を参照する構成なので両方含める。
       # ダウンロードして index.html を開けば「期待画像 / 実際の描画 / 差分」を目視確認できる。

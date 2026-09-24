@@ -14,7 +14,9 @@ hilt = "2.52"
 hiltNavigationCompose = "1.2.0"
 room = "2.7.0"
 material = "1.12.0"
-screenshot = "0.0.1-alpha11"
+screenshot = "0.0.1-alpha16"
+# @PreviewTest 注釈のみ使う。alpha16 は Kotlin 2.2 のメタデータでビルドされ Kotlin 2.0 から読めないため、読める alpha11 に据え置く
+screenshotValidationApi = "0.0.1-alpha11"
 datastore = "1.1.1"
 
 [libraries]
@@ -41,6 +43,7 @@ room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "
 room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshotValidationApi" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
 
 [plugins]
