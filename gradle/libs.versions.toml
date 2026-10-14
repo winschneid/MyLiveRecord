@@ -18,10 +18,17 @@ screenshot = "0.0.1-alpha16"
 # @PreviewTest 注釈のみ使う。alpha16 は Kotlin 2.2 のメタデータでビルドされ Kotlin 2.0 から読めないため、読める alpha11 に据え置く
 screenshotValidationApi = "0.0.1-alpha11"
 datastore = "1.1.1"
+credentials = "1.5.0"
+googleid = "1.1.1"
+playServicesAuth = "21.6.0"
+orgJson = "20240303"
+mockito = "5.14.2"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
+org-json = { group = "org.json", name = "json", version.ref = "orgJson" }
+mockito-core = { group = "org.mockito", name = "mockito-core", version.ref = "mockito" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
@@ -45,6 +52,10 @@ room-compiler = { group = "androidx.room", name = "room-compiler", version.ref =
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshotValidationApi" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastore" }
+androidx-credentials = { group = "androidx.credentials", name = "credentials", version.ref = "credentials" }
+androidx-credentials-play-services-auth = { group = "androidx.credentials", name = "credentials-play-services-auth", version.ref = "credentials" }
+googleid = { group = "com.google.android.libraries.identity.googleid", name = "googleid", version.ref = "googleid" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

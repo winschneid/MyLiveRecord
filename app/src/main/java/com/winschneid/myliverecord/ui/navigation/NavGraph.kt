@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.winschneid.myliverecord.ui.screens.add.AddLiveScreen
 import com.winschneid.myliverecord.ui.screens.artist.ArtistDetailScreen
+import com.winschneid.myliverecord.ui.screens.backup.BackupScreen
 import com.winschneid.myliverecord.ui.screens.history.HistoryScreen
 import com.winschneid.myliverecord.ui.screens.settings.SettingsScreen
 import com.winschneid.myliverecord.ui.screens.summary.YearSummaryScreen
@@ -88,7 +89,13 @@ fun NavGraph() {
                 AddLiveScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(Routes.Settings.route) {
-                SettingsScreen(onNavigateBack = { navController.popBackStack() })
+                SettingsScreen(
+                    onNavigateBack = { navController.popBackStack() },
+                    onNavigateToBackup = { navController.navigate(Routes.Backup.route) },
+                )
+            }
+            composable(Routes.Backup.route) {
+                BackupScreen(onNavigateBack = { navController.popBackStack() })
             }
             composable(
                 route = Routes.EditLive.route,

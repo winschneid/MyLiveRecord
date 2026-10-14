@@ -1,4 +1,4 @@
-package com.winschneid.myliverecord.data.transfer
+package com.winschneid.myliverecord.domain.transfer
 
 import com.winschneid.myliverecord.domain.model.LiveRecord
 import org.json.JSONArray

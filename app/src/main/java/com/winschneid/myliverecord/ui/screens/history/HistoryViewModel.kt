@@ -4,12 +4,13 @@ import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.winschneid.myliverecord.data.transfer.LiveRecordsJson
 import com.winschneid.myliverecord.domain.model.LiveRecord
 import com.winschneid.myliverecord.domain.usecase.AddLiveRecordUseCase
 import com.winschneid.myliverecord.domain.usecase.DeleteLiveRecordUseCase
+import com.winschneid.myliverecord.domain.usecase.ExportLiveRecordsJsonUseCase
 import com.winschneid.myliverecord.domain.usecase.GetLiveRecordByIdUseCase
 import com.winschneid.myliverecord.domain.usecase.GetLiveRecordsUseCase
+import com.winschneid.myliverecord.domain.usecase.ImportLiveRecordsJsonUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -108,6 +108,8 @@ class HistoryViewModel @Inject constructor(
     private val addLiveRecord: AddLiveRecordUseCase,
     private val deleteLiveRecord: DeleteLiveRecordUseCase,
     private val getLiveRecordById: GetLiveRecordByIdUseCase,
+    private val exportLiveRecordsJson: ExportLiveRecordsJsonUseCase,
+    private val importLiveRecordsJson: ImportLiveRecordsJsonUseCase,
 ) : ViewModel() {
 
     private val _searchQuery = MutableStateFlow("")
@@ -152,14 +154,13 @@ class HistoryViewModel @Inject constructor(
     fun exportTo(uri: Uri) {
         viewModelScope.launch {
             runCatching {
-                val records = getLiveRecords().first()
-                val json = LiveRecordsJson.encode(records)
+                val result = exportLiveRecordsJson()
                 withContext(Dispatchers.IO) {
                     context.contentResolver.openOutputStream(uri, "wt")
-                        ?.use { it.write(json.toByteArray()) }
+                        ?.use { it.write(result.json.toByteArray()) }
                         ?: error("failed to open output stream")
                 }
-                records.size
+                result.count
             }.onSuccess { count ->
                 _message.value = HistoryMessage("${count}件をエクスポートしました")
             }.onFailure {
@@ -176,9 +177,7 @@ class HistoryViewModel @Inject constructor(
                         ?.use { it.readBytes().decodeToString() }
                         ?: error("failed to open input stream")
                 }
-                val records = LiveRecordsJson.decode(text)
-                records.forEach { addLiveRecord(it) }
-                records.size
+                importLiveRecordsJson(text)
             }.onSuccess { count ->
                 _message.value = HistoryMessage("${count}件をインポートしました")
             }.onFailure {

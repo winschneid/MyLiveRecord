@@ -9,7 +9,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +32,7 @@ import com.winschneid.myliverecord.ui.theme.MyLiveRecordTheme
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToBackup: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -37,6 +40,7 @@ fun SettingsScreen(
         uiState = uiState,
         onShowSpendingChange = viewModel::setShowSpending,
         onNavigateBack = onNavigateBack,
+        onNavigateToBackup = onNavigateToBackup,
     )
 }
 
@@ -46,6 +50,7 @@ private fun SettingsContent(
     uiState: SettingsUiState,
     onShowSpendingChange: (Boolean) -> Unit,
     onNavigateBack: () -> Unit,
+    onNavigateToBackup: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -69,7 +74,43 @@ private fun SettingsContent(
                 checked = uiState.showSpending,
                 onCheckedChange = onShowSpendingChange,
             )
+            HorizontalDivider()
+            SettingNavigationRow(
+                title = "Googleドライブにバックアップ",
+                description = "Googleアカウントで記録をバックアップ・復元します",
+                onClick = onNavigateToBackup,
+            )
         }
+    }
+}
+
+@Composable
+private fun SettingNavigationRow(
+    title: String,
+    description: String,
+    onClick: () -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f).padding(end = 16.dp)) {
+            Text(text = title, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                text = description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
@@ -108,6 +149,7 @@ internal fun SettingsPreview() {
             uiState = SettingsUiState(showSpending = true),
             onShowSpendingChange = {},
             onNavigateBack = {},
+            onNavigateToBackup = {},
         )
     }
 }
