@@ -82,8 +82,22 @@ android {
     kotlinOptions {
         jvmTarget = "11"
     }
+    // Google サインイン用の Web クライアントID（OAuth クライアントIDは秘密情報ではないが、
+    // public リポジトリには含めない）。local.properties の googleWebClientId か環境変数
+    // GOOGLE_WEB_CLIENT_ID から読み、未設定なら空文字 → アプリ側で「未設定」と表示する。
+    val localPropsFile = rootProject.file("local.properties")
+    val localProps = Properties().apply {
+        if (localPropsFile.exists()) localPropsFile.inputStream().use { load(it) }
+    }
+    val googleWebClientId: String =
+        localProps.getProperty("googleWebClientId") ?: System.getenv("GOOGLE_WEB_CLIENT_ID") ?: ""
+    defaultConfig {
+        buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"$googleWebClientId\"")
+    }
+
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     @Suppress("UnstableApiUsage")
     experimentalProperties["android.experimental.enableScreenshotTest"] = true
@@ -119,11 +133,20 @@ dependencies {
     // DataStore（設定の永続化）
     implementation(libs.androidx.datastore.preferences)
 
+    // Google サインイン（Credential Manager）と Drive アクセス許可（Authorization API）
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
+    implementation(libs.play.services.auth)
+
     // Compose Preview Screenshot Testing（src/screenshotTest の @Preview をレンダリングして比較）
     screenshotTestImplementation(platform(libs.androidx.compose.bom))
     screenshotTestImplementation(libs.androidx.ui.tooling)
 
     testImplementation(libs.junit)
+    // 単体テストで org.json（Android スタブは例外を投げる）と PendingIntent のモックを使う
+    testImplementation(libs.org.json)
+    testImplementation(libs.mockito.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))

@@ -7,6 +7,7 @@ sealed class Routes(val route: String) {
     data object YearSummary : Routes("year_summary")
     data object AddLive : Routes("add_live")
     data object Settings : Routes("settings")
+    data object Backup : Routes("backup")
     data object EditLive : Routes("edit_live/{recordId}") {
         fun createRoute(recordId: Long) = "edit_live/$recordId"
     }

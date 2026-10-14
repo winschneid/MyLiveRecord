@@ -7,10 +7,15 @@ import com.winschneid.myliverecord.ui.screens.add.AddLiveEmptyPreview
 import com.winschneid.myliverecord.ui.screens.add.AddLiveFestivalPreview
 import com.winschneid.myliverecord.ui.screens.add.AddLiveFilledPreview
 import com.winschneid.myliverecord.ui.screens.artist.ArtistDetailPreview
+import com.winschneid.myliverecord.ui.screens.backup.BackupConfirmRestorePreview
+import com.winschneid.myliverecord.ui.screens.backup.BackupNotConfiguredPreview
+import com.winschneid.myliverecord.ui.screens.backup.BackupSignedInPreview
+import com.winschneid.myliverecord.ui.screens.backup.BackupSignedOutPreview
 import com.winschneid.myliverecord.ui.screens.history.HistoryEmptyPreview
 import com.winschneid.myliverecord.ui.screens.history.HistoryLoadingPreview
 import com.winschneid.myliverecord.ui.screens.history.HistoryNoSearchResultPreview
 import com.winschneid.myliverecord.ui.screens.history.HistoryWithDataPreview
+import com.winschneid.myliverecord.ui.screens.settings.SettingsPreview
 import com.winschneid.myliverecord.ui.screens.summary.YearSummaryCollapsedPreview
 import com.winschneid.myliverecord.ui.screens.summary.YearSummaryExpandedPreview
 
@@ -65,3 +70,23 @@ fun YearSummaryExpanded_ss() = YearSummaryExpandedPreview()
 @Preview(showBackground = true)
 @Composable
 fun ArtistDetail_ss() = ArtistDetailPreview()
+
+@Preview(showBackground = true)
+@Composable
+fun Settings_ss() = SettingsPreview()
+
+@Preview(showBackground = true)
+@Composable
+fun BackupNotConfigured_ss() = BackupNotConfiguredPreview()
+
+@Preview(showBackground = true)
+@Composable
+fun BackupSignedOut_ss() = BackupSignedOutPreview()
+
+@Preview(showBackground = true)
+@Composable
+fun BackupSignedIn_ss() = BackupSignedInPreview()
+
+@Preview(showBackground = true)
+@Composable
+fun BackupConfirmRestore_ss() = BackupConfirmRestorePreview()

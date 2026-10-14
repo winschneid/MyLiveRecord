@@ -1,26 +1,14 @@
 package com.winschneid.myliverecord.domain.usecase
 
 import com.winschneid.myliverecord.domain.model.LiveRecord
-import com.winschneid.myliverecord.domain.repository.LiveRecordRepository
-import kotlinx.coroutines.flow.Flow
+import com.winschneid.myliverecord.testutil.FakeLiveRecordRepository
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Test
 import java.util.Calendar
 
 class GetYearSummaryUseCaseTest {
-
-    private class FakeRepository(private val records: List<LiveRecord>) : LiveRecordRepository {
-        override fun observeAllRecords(): Flow<List<LiveRecord>> = flowOf(records)
-        override suspend fun getRecordById(id: Long): LiveRecord? = null
-        override suspend fun addRecord(record: LiveRecord) = Unit
-        override suspend fun updateRecord(record: LiveRecord) = Unit
-        override suspend fun deleteRecord(id: Long) = Unit
-        override fun observeDistinctArtistNames(): Flow<List<String>> = flowOf(emptyList())
-        override fun observeDistinctVenueNames(): Flow<List<String>> = flowOf(emptyList())
-    }
 
     /** タイムゾーン境界の影響を避けるため年の中央（7月1日）の epoch millis を使う */
     private fun midYear(year: Int): Long =
@@ -47,7 +35,7 @@ class GetYearSummaryUseCaseTest {
     @Test
     fun `年ごとにグループ化され新しい年が先頭になる`() = runBlocking {
         val useCase = GetYearSummaryUseCase(
-            FakeRepository(
+            FakeLiveRecordRepository(
                 listOf(
                     record(1, 2024, listOf("YOASOBI")),
                     record(2, 2025, listOf("Ado")),
@@ -66,7 +54,7 @@ class GetYearSummaryUseCaseTest {
     @Test
     fun `アーティストは回数の多い順に並ぶ`() = runBlocking {
         val useCase = GetYearSummaryUseCase(
-            FakeRepository(
+            FakeLiveRecordRepository(
                 listOf(
                     record(1, 2024, listOf("Ado")),
                     record(2, 2024, listOf("YOASOBI", "Ado")),
@@ -87,7 +75,7 @@ class GetYearSummaryUseCaseTest {
     @Test
     fun `会場は回数の多い順に並ぶ`() = runBlocking {
         val useCase = GetYearSummaryUseCase(
-            FakeRepository(
+            FakeLiveRecordRepository(
                 listOf(
                     record(1, 2024, listOf("Ado"), venue = "東京ドーム"),
                     record(2, 2024, listOf("Ado"), venue = "日本武道館"),
@@ -107,7 +95,7 @@ class GetYearSummaryUseCaseTest {
     @Test
     fun `チケット代は年ごとに合計され未入力はゼロ扱い`() = runBlocking {
         val useCase = GetYearSummaryUseCase(
-            FakeRepository(
+            FakeLiveRecordRepository(
                 listOf(
                     record(1, 2024, listOf("YOASOBI"), price = 9900),
                     record(2, 2024, listOf("Ado"), price = null),

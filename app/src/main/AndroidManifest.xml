@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- Google サインインと Google Drive へのバックアップ／復元にのみ使用 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:name=".MyLiveRecordApp"
         android:allowBackup="true"

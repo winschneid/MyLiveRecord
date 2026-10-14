@@ -6,6 +6,10 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.preferencesDataStoreFile
 import androidx.room.Room
+import com.winschneid.myliverecord.data.auth.DriveAuthorizer
+import com.winschneid.myliverecord.data.auth.PlayServicesDriveAuthorizer
+import com.winschneid.myliverecord.data.backup.HttpTransport
+import com.winschneid.myliverecord.data.backup.HttpUrlConnectionTransport
 import com.winschneid.myliverecord.data.local.LiveRecordDatabase
 import com.winschneid.myliverecord.data.local.dao.LiveRecordDao
 import com.winschneid.myliverecord.data.repository.LiveRecordRepositoryImpl
@@ -57,4 +61,12 @@ abstract class RepositoryModule {
     abstract fun bindLiveRecordRepository(
         impl: LiveRecordRepositoryImpl,
     ): LiveRecordRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindDriveAuthorizer(impl: PlayServicesDriveAuthorizer): DriveAuthorizer
+
+    @Binds
+    @Singleton
+    abstract fun bindHttpTransport(impl: HttpUrlConnectionTransport): HttpTransport
 }
