@@ -30,12 +30,22 @@ jobs:
       - name: Regenerate reference screenshots
         run: ./gradlew updateDebugScreenshotTest
 
+      # @PreviewTest の付け忘れ等で1枚も生成されない場合は「差分なし」と区別して失敗させる
+      - name: Ensure references were generated
+        run: |
+          n=$(find app/src/screenshotTestDebug/reference -name '*.png' 2>/dev/null | wc -l)
+          echo "参照画像: $n 枚"
+          if [ "$n" -eq 0 ]; then
+            echo "::error::参照画像が1枚も生成されていません（@PreviewTest が付いているか確認）"
+            exit 1
+          fi
+
       - name: Commit updated references
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain app/src/debug/screenshotTest/reference)" ]; then
-            git add app/src/debug/screenshotTest/reference
+          if [ -n "$(git status --porcelain app/src/screenshotTestDebug/reference)" ]; then
+            git add app/src/screenshotTestDebug/reference
             git commit -m "スクリーンショット参照画像を更新 [skip ci]"
             git push
           else
