@@ -85,22 +85,27 @@ fun YearSummaryExpanded_ss() = YearSummaryExpandedPreview()
 @Composable
 fun ArtistDetail_ss() = ArtistDetailPreview()
 
+@PreviewTest
 @Preview(showBackground = true)
 @Composable
 fun Settings_ss() = SettingsPreview()
 
+@PreviewTest
 @Preview(showBackground = true)
 @Composable
 fun BackupNotConfigured_ss() = BackupNotConfiguredPreview()
 
+@PreviewTest
 @Preview(showBackground = true)
 @Composable
 fun BackupSignedOut_ss() = BackupSignedOutPreview()
 
+@PreviewTest
 @Preview(showBackground = true)
 @Composable
 fun BackupSignedIn_ss() = BackupSignedInPreview()
 
+@PreviewTest
 @Preview(showBackground = true)
 @Composable
 fun BackupConfirmRestore_ss() = BackupConfirmRestorePreview()
